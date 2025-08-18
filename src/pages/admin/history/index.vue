@@ -5,15 +5,14 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   Search,
   Refresh,
-  Download,
+
   Delete,
-  View,
   Filter,
   Calendar,
   User,
   VideoPlay
 } from '@element-plus/icons-vue'
-import { getAnalysisHistoryAPI, deleteAnalysisAPI, type AnalysisRecord, type AnalysisHistoryResponse } from '@/api/admin/history'
+import { getAnalysisHistoryAPI, deleteAnalysisAPI, type AnalysisRecord } from '@/api/admin/history'
 
 // 动画配置
 const cardVariants = {
@@ -42,13 +41,10 @@ const pageSize = ref(20)
 
 // 搜索和筛选
 const searchForm = reactive({
-  keyword: '',
   userId: '',
-  username: '',
   emotion: '',
   startDate: '',
-  endDate: '',
-  status: ''
+  endDate: ''
 })
 
 // 情感类型选项
@@ -62,13 +58,7 @@ const emotionOptions = [
   { label: '惊讶', value: 'surprise' }
 ]
 
-// 状态选项
-const statusOptions = [
-  { label: '全部', value: '' },
-  { label: '成功', value: 'success' },
-  { label: '失败', value: 'failed' },
-  { label: '处理中', value: 'processing' }
-]
+
 
 // 多选
 const multipleSelection = ref<AnalysisRecord[]>([])
@@ -80,22 +70,19 @@ async function fetchHistoryData() {
     const params = {
       page: currentPage.value,
       page_size: pageSize.value,
-      keyword: searchForm.keyword || undefined,
       user_id: searchForm.userId || undefined,
-      username: searchForm.username || undefined,
       emotion: searchForm.emotion || undefined,
       start_date: searchForm.startDate || undefined,
-      end_date: searchForm.endDate || undefined,
-      status: searchForm.status || undefined
+      end_date: searchForm.endDate || undefined
     }
 
     const res = await getAnalysisHistoryAPI(params)
     if (res && res.code === 200) {
-      tableData.value = res.data?.analyses ?? []
+      tableData.value = res.data.analyses ?? []
       // 使用API返回的分页信息
-      total.value = res.data?.pagination?.total_count ?? 0
+      total.value = res.data.pagination?.total_count ?? 0
     } else {
-      ElMessage.error((res as any)?.msg || '获取分析历史失败')
+      ElMessage.error(res?.msg || '获取分析历史失败')
     }
   } catch (error) {
     console.error('获取分析历史失败:', error)
@@ -142,11 +129,7 @@ function handleSelectionChange(selection: AnalysisRecord[]) {
   multipleSelection.value = selection
 }
 
-// 查看详情
-function handleView(row: AnalysisRecord) {
-  // 这里可以打开详情弹窗或跳转到详情页面
-  ElMessage.info(`查看分析记录: ${row.id}`)
-}
+
 
 // 删除单个记录
 async function handleDelete(row: AnalysisRecord) {
@@ -202,11 +185,6 @@ async function handleBatchDelete() {
   }
 }
 
-// 导出数据
-function handleExport() {
-  ElMessage.info('导出功能开发中...')
-}
-
 // 格式化情感类型
 function formatEmotion(emotion: string) {
   const emotionMap: Record<string, string> = {
@@ -231,8 +209,8 @@ function formatStatus(status: string) {
 }
 
 // 获取状态标签类型
-function getStatusType(status: string) {
-  const typeMap: Record<string, string> = {
+function getStatusType(status: string): 'success' | 'info' | 'warning' | 'danger' {
+  const typeMap: Record<string, 'success' | 'info' | 'warning' | 'danger'> = {
     success: 'success',
     failed: 'danger',
     processing: 'warning'
@@ -241,16 +219,22 @@ function getStatusType(status: string) {
 }
 
 // 获取情感标签类型
-function getEmotionType(emotion: string) {
-  const typeMap: Record<string, string> = {
+function getEmotionType(emotion: string): 'success' | 'info' | 'warning' | 'danger' | 'primary' {
+  const typeMap: Record<string, 'success' | 'info' | 'warning' | 'danger' | 'primary'> = {
     happy: 'success',
     sad: 'info',
     angry: 'danger',
-    neutral: '',
+    neutral: 'info',
     fear: 'warning',
-    surprise: 'primary'
+    surprise: 'primary',
+    快乐: 'success',
+    悲伤: 'info',
+    愤怒: 'danger',
+    中性: 'info',
+    恐惧: 'warning',
+    惊讶: 'primary'
   }
-  return typeMap[emotion] || ''
+  return typeMap[emotion] || 'info'
 }
 
 onMounted(() => {
@@ -277,12 +261,7 @@ onMounted(() => {
                 </el-icon>
                 刷新
               </el-button>
-              <el-button type="success" size="small" @click="handleExport">
-                <el-icon>
-                  <Download />
-                </el-icon>
-                导出
-              </el-button>
+
             </div>
           </div>
         </template>
@@ -290,31 +269,9 @@ onMounted(() => {
         <!-- 搜索筛选区域 -->
         <div class="search-section mb-4">
           <el-form :model="searchForm" inline class="search-form">
-            <el-form-item label="关键词">
-              <el-input v-model="searchForm.keyword" placeholder="搜索文件名或分析结果" clearable style="width: 200px"
-                @keyup.enter="handleSearch">
-                <template #prefix>
-                  <el-icon>
-                    <Search />
-                  </el-icon>
-                </template>
-              </el-input>
-            </el-form-item>
-
             <el-form-item label="用户ID">
               <el-input v-model="searchForm.userId" placeholder="用户ID" clearable style="width: 120px"
                 @keyup.enter="handleSearch" />
-            </el-form-item>
-
-            <el-form-item label="用户名">
-              <el-input v-model="searchForm.username" placeholder="用户名" clearable style="width: 150px"
-                @keyup.enter="handleSearch">
-                <template #prefix>
-                  <el-icon>
-                    <User />
-                  </el-icon>
-                </template>
-              </el-input>
             </el-form-item>
 
             <el-form-item label="情感类型">
@@ -324,12 +281,7 @@ onMounted(() => {
               </el-select>
             </el-form-item>
 
-            <el-form-item label="状态">
-              <el-select v-model="searchForm.status" placeholder="选择状态" clearable style="width: 120px">
-                <el-option v-for="option in statusOptions" :key="option.value" :label="option.label"
-                  :value="option.value" />
-              </el-select>
-            </el-form-item>
+
 
             <el-form-item label="时间范围">
               <el-date-picker v-model="searchForm.startDate" type="date" placeholder="开始日期" style="width: 140px"
@@ -404,16 +356,16 @@ onMounted(() => {
                 <el-icon class="text-blue-500">
                   <VideoPlay />
                 </el-icon>
-                <span class="truncate">{{ row.audio_file_detail?.original_name }}</span>
+                <span class="truncate">{{ row.audio_file_detail.original_name }}</span>
               </div>
             </template>
           </el-table-column>
 
           <el-table-column prop="emotion_analysis_detail.primary_emotion" label="检测情感" width="100">
             <template #default="{ row }">
-              <el-tag :type="getEmotionType(row.emotion_analysis_detail?.primary_emotion)" size="small">
-                {{ row.emotion_analysis_detail?.primary_emotion_display ||
-                  formatEmotion(row.emotion_analysis_detail?.primary_emotion) }}
+              <el-tag :type="getEmotionType(row.emotion_analysis_detail.primary_emotion)" size="small">
+                {{ row.emotion_analysis_detail.primary_emotion_display ||
+                  formatEmotion(row.emotion_analysis_detail.primary_emotion) }}
               </el-tag>
             </template>
           </el-table-column>
@@ -421,24 +373,24 @@ onMounted(() => {
           <el-table-column prop="emotion_analysis_detail.confidence_percentage" label="置信度" width="100">
             <template #default="{ row }">
               <div class="flex items-center gap-1">
-                <el-progress :percentage="Math.round(row.emotion_analysis_detail?.confidence_percentage || 0)"
+                <el-progress :percentage="Math.round(row.emotion_analysis_detail.confidence_percentage || 0)"
                   :stroke-width="6" :show-text="false" style="width: 50px" />
-                <span class="text-sm">{{ Math.round(row.emotion_analysis_detail?.confidence_percentage || 0) }}%</span>
+                <span class="text-sm">{{ Math.round(row.emotion_analysis_detail.confidence_percentage || 0) }}%</span>
               </div>
             </template>
           </el-table-column>
 
           <el-table-column prop="audio_file_detail.duration" label="时长" width="80">
             <template #default="{ row }">
-              {{ row.audio_file_detail?.duration_formatted || (Math.round(row.audio_file_detail?.duration || 0) + 's')
+              {{ row.audio_file_detail.duration_formatted || (Math.round(row.audio_file_detail.duration || 0) + 's')
               }}
             </template>
           </el-table-column>
 
           <el-table-column prop="audio_file_detail.status" label="状态" width="80">
             <template #default="{ row }">
-              <el-tag :type="getStatusType(row.audio_file_detail?.status)" size="small">
-                {{ row.audio_file_detail?.status_display || formatStatus(row.audio_file_detail?.status) }}
+              <el-tag :type="getStatusType(row.audio_file_detail.status)" size="small">
+                {{ row.audio_file_detail.status_display || formatStatus(row.audio_file_detail.status) }}
               </el-tag>
             </template>
           </el-table-column>
@@ -454,14 +406,9 @@ onMounted(() => {
             </template>
           </el-table-column>
 
-          <el-table-column label="操作" width="120" fixed="right">
+          <el-table-column label="操作" width="80" fixed="right">
             <template #default="{ row }">
               <div class="flex gap-1">
-                <el-button type="primary" size="small" @click="handleView(row)">
-                  <el-icon>
-                    <View />
-                  </el-icon>
-                </el-button>
                 <el-button type="danger" size="small" @click="handleDelete(row)">
                   <el-icon>
                     <Delete />

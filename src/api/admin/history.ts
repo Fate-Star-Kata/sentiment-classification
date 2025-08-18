@@ -1,4 +1,4 @@
-import http from '@/http'
+import { http } from '@/http'
 
 // 情感分数接口
 export interface EmotionScores {
@@ -65,6 +65,7 @@ export interface AnalysisRecord {
   created_time: string
   is_favorite: boolean
   notes?: string
+
 }
 
 // 分页信息接口
@@ -113,12 +114,22 @@ export function getAnalysisDetailAPI(id: number): Promise<AnalysisRecord> {
 
 // 删除分析记录
 export function deleteAnalysisAPI(id: number): Promise<any> {
-  return http.delete(`/api/speech/admin/analyses/${id}`)
+  return http.delete('/api/speech/admin/delete/', {
+    data: {
+      type: 'history',
+      ids: id.toString()
+    }
+  })
 }
 
 // 批量删除分析记录
-export function batchDeleteAnalysisAPI(ids: number[]) {
-  return http.post('/api/admin/analysis/batch-delete', { ids })
+export function batchDeleteAnalysisAPI(ids: number[]): Promise<any> {
+  return http.delete('/api/speech/admin/delete/', {
+    data: {
+      type: 'user',
+      ids: ids.join(',')
+    }
+  })
 }
 
 // 导出分析历史
