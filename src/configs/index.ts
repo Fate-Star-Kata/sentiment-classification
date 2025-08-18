@@ -12,7 +12,6 @@ export const defaultMenuItems: MenuItem[] = [
     label: "首页",
     href: "/",
     icon: null,
-    hide: true,
   },
   {
     id: "history",
@@ -26,7 +25,12 @@ export const defaultMenuItems: MenuItem[] = [
     href: "/profile",
     icon: null,
   },
-
+  {
+    id: "help",
+    label: "帮助",
+    href: "/help",
+    icon: null,
+  },
   {
     id: "admin",
     label: "menu.admin",
