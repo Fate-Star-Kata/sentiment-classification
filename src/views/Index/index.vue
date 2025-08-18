@@ -33,7 +33,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-base-100 p-8">
+  <div class="min-h-screen  p-8">
     <!-- 标题区域 -->
     <div class="text-center mb-8">
       <h1 class="text-4xl font-bold text-primary mb-4">
