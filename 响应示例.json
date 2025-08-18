@@ -1,0 +1,43 @@
+{
+	"code": 200,
+	"msg": "获取仪表板数据成功",
+	"data": {
+		"statistics": {
+			"total_analyses": 3,
+			"recent_analyses": 3
+		},
+		"emotion_distribution": [
+			{
+				"emotion": "disgust",
+				"count": 2
+			},
+			{
+				"emotion": "angry",
+				"count": 1
+			}
+		],
+		"recent_records": [
+			{
+				"id": 29,
+				"filename": "voice_memo.wav",
+				"emotion": "disgust",
+				"confidence": 0.5515394408040775,
+				"created_at": "2025-08-18 15:24:58"
+			},
+			{
+				"id": 28,
+				"filename": "webinar.mp3",
+				"emotion": "disgust",
+				"confidence": 0.6278567072365749,
+				"created_at": "2025-08-18 15:24:58"
+			},
+			{
+				"id": 27,
+				"filename": "customer_service.wav",
+				"emotion": "angry",
+				"confidence": 0.6670286163614704,
+				"created_at": "2025-08-18 15:24:58"
+			}
+		]
+	}
+}
