@@ -8,36 +8,36 @@ const FileUploadUrl: string = (import.meta.env.VITE_FILE_UPLOAD_URL as string)
 // 主菜单配置（用于Header组件）
 export const defaultMenuItems: MenuItem[] = [
   {
-    id: 'dashboard',
-    label: 'menu.dashboard',
-    href: '/dashboard',
+    id: "home",
+    label: "首页",
+    href: "/",
     icon: null,
   },
   {
-    id: 'analysis',
-    label: 'menu.analysis',
-    href: '/analysis',
+    id: "history",
+    label: "分析历史",
+    href: "/history",
     icon: null,
   },
   {
-    id: 'history',
-    label: 'menu.history',
-    href: '/history',
+    id: "profile",
+    label: "个人中心",
+    href: "/profile",
     icon: null,
   },
   {
-    id: 'profile',
-    label: 'menu.profile',
-    href: '/profile',
+    id: "help",
+    label: "帮助",
+    href: "/help",
     icon: null,
   },
   {
-    id: 'help',
-    label: 'menu.help',
-    href: '/help',
+    id: "admin",
+    label: "menu.admin",
+    href: "/admin",
     icon: null,
   },
-]
+];
 
 // 管理后台菜单配置
 export const adminMenuItems: AdminHeader[] = [

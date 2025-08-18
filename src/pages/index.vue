@@ -1,312 +1,328 @@
 <template>
-  <div class="min-h-screen bg-base-100">
-    <!-- 英雄区域 -->
-    <div class="hero min-h-screen bg-gradient-to-br from-primary/10 to-secondary/10">
-      <div class="hero-content text-center">
-        <div class="max-w-md" v-motion-fade-visible>
-          <h1 class="text-5xl font-bold mb-5" v-motion-slide-up :delay="200">
-            {{ heroSection.title }}
-          </h1>
-          <p class="py-6 text-lg" v-motion-slide-up :delay="400">
-            {{ heroSection.description }}
-          </p>
-          <div class="flex gap-4 justify-center" v-motion-slide-up :delay="600">
-            <button :class="heroSection.primaryButton.class">
-              {{ heroSection.primaryButton.text }}
-            </button>
-            <button :class="heroSection.secondaryButton.class">
-              {{ heroSection.secondaryButton.text }}
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
+  <div class="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50">
 
-    <!-- 特性展示 -->
-    <div class="py-20 bg-base-200">
-      <div class="container mx-auto px-4">
-        <div class="text-center mb-16" v-motion-fade-visible>
-          <h2 class="text-4xl font-bold mb-4">{{ featuresSection.title }}</h2>
-          <p class="text-lg text-base-content/70">{{ featuresSection.subtitle }}</p>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div v-for="(feature, index) in featuresSection.features" :key="feature.id" class="card bg-base-100 shadow-xl"
-            v-motion-slide-visible-once :delay="feature.delay">
-            <div class="card-body text-center">
-              <div class="text-4xl mb-4">
-                {{ feature.icon }}
-              </div>
-              <h3 class="card-title justify-center">{{ feature.title }}</h3>
-              <p>{{ feature.description }}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- 统计数据 -->
-    <div class="py-20 bg-primary text-primary-content">
-      <div class="container mx-auto px-4">
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-8 text-center">
-          <div v-for="(stat, index) in statsSection.stats" :key="stat.id" v-motion-slide-visible-once-up
-            :delay="stat.delay">
-            <div class="stat">
-              <div class="stat-value text-4xl font-bold">{{ stat.animatedValue }}{{ stat.suffix }}</div>
-              <div class="stat-title text-primary-content/80">{{ stat.title }}</div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- CTA 区域 -->
-    <div class="py-20 bg-base-100">
-      <div class="container mx-auto px-4 text-center" v-motion-fade-visible>
-        <h2 class="text-4xl font-bold mb-6">{{ ctaSection.title }}</h2>
-        <p class="text-lg mb-8 text-base-content/70">{{ ctaSection.description }}</p>
-        <div class="flex gap-4 justify-center">
-          <button v-for="(button, index) in ctaSection.buttons" :key="index" :class="button.class">
-            {{ button.text }}
+    <!-- 主要内容区域 -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <!-- 英雄区域 -->
+      <div class="text-center mb-16">
+        <h1 class="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
+          欢迎使用音乐情感分析系统
+        </h1>
+        <p class="text-xl md:text-2xl text-gray-600 mb-8 max-w-3xl mx-auto">
+          通过先进的AI技术，准确识别您音乐中的情感状态
+        </p>
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+          <button 
+            @click="scrollToRecording"
+            class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg text-lg font-medium transition-colors"
+          >
+            开始分析
+          </button>
+          <button class="bg-white hover:bg-gray-50 text-gray-700 px-8 py-3 rounded-lg text-lg font-medium border border-gray-300 transition-colors">
+            了解更多
           </button>
         </div>
       </div>
-    </div>
+
+      <!-- 功能特性 -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+        <div class="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+          <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
+            <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"></path>
+            </svg>
+          </div>
+          <h3 class="text-xl font-semibold text-gray-900 mb-2">智能识别</h3>
+          <p class="text-gray-600">基于深度学习算法，精准识别音乐中的情感特征和情绪变化</p>
+        </div>
+
+        <div class="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+          <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-4">
+            <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+            </svg>
+          </div>
+          <h3 class="text-xl font-semibold text-gray-900 mb-2">详细分析</h3>
+          <p class="text-gray-600">提供多维度情感分析报告，包含情感强度和时间分布</p>
+        </div>
+
+        <div class="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+          <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-4">
+            <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+            </svg>
+          </div>
+          <h3 class="text-xl font-semibold text-gray-900 mb-2">快速处理</h3>
+          <p class="text-gray-600">高效的处理速度，支持多种音频格式，快速获得分析结果</p>
+        </div>
+      </div>
+
+      <!-- 录音区域 -->
+      <div ref="recordingSection" class="bg-white rounded-lg p-8 shadow-sm border border-gray-200 mb-8">
+        <h3 class="text-2xl font-semibold text-gray-900 mb-6 text-center">实时录音进行情感分析</h3>
+        <div class="text-center">
+          <!-- 麦克风权限状态 -->
+          <div v-if="!microphonePermission" class="mb-6">
+            <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path>
+              </svg>
+            </div>
+            <p class="text-gray-600 mb-4">需要麦克风权限才能进行录音</p>
+            <button 
+              @click="requestMicrophonePermission"
+              class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
+            >
+              请求麦克风权限
+            </button>
+          </div>
+
+          <!-- 麦克风选择和录音控制 -->
+          <div v-else class="space-y-6">
+            <!-- 麦克风选择 -->
+            <div class="flex flex-col items-center space-y-4">
+              <label class="text-sm font-medium text-gray-700">选择麦克风设备</label>
+              <select 
+                v-model="selectedMicrophone"
+                class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="" disabled>请选择麦克风</option>
+                <option 
+                  v-for="device in microphoneDevices" 
+                  :key="device.deviceId" 
+                  :value="device.deviceId"
+                >
+                  {{ device.label || `麦克风 ${device.deviceId.slice(0, 8)}` }}
+                </option>
+              </select>
+            </div>
+
+            <!-- 录音控制 -->
+            <div class="flex flex-col items-center space-y-4">
+              <div class="w-20 h-20 rounded-full flex items-center justify-center transition-colors" :class="{
+                'bg-red-100': !isRecording,
+                'bg-red-500 animate-pulse': isRecording
+              }">
+                <svg class="w-10 h-10" :class="{
+                  'text-red-600': !isRecording,
+                  'text-white': isRecording
+                }" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"></path>
+                  <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"></path>
+                </svg>
+              </div>
+              
+              <div class="flex space-x-4">
+                <button 
+                  v-if="!isRecording"
+                  @click="startRecording"
+                  :disabled="!selectedMicrophone"
+                  class="bg-red-600 hover:bg-red-700 disabled:bg-gray-400 text-white px-6 py-3 rounded-lg font-medium transition-colors"
+                >
+                  开始录音
+                </button>
+                <button 
+                  v-else
+                  @click="stopRecording"
+                  class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
+                >
+                  停止录音
+                </button>
+              </div>
+              
+              <div v-if="isRecording" class="text-sm text-gray-600">
+                录音时长: {{ recordingDuration }}s
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 上传区域 -->
+      <div class="bg-white rounded-lg p-8 shadow-sm border border-gray-200">
+        <h3 class="text-2xl font-semibold text-gray-900 mb-6 text-center">上传音频文件进行情感分析</h3>
+        <div class="h-64">
+          <ReceiveFiles
+            :allowSuffix="['mp3', 'wav', 'flac', 'aac', 'm4a', 'ogg']"
+            :maxSize="50 * 1024 * 1024"
+            customTitle="点击或拖拽音频文件到此处"
+            customDesc="支持 MP3、WAV、FLAC、AAC、M4A、OGG 格式，文件大小不超过 50MB"
+            @file-selected="handleFileSelected"
+          />
+        </div>
+      </div>
+    </main>
 
     <!-- 页脚 -->
-    <footer class="footer footer-center p-10 bg-base-200 text-base-content">
-      <div>
-        <div class="grid grid-flow-col gap-4">
-          <a class="link link-hover">关于我们</a>
-          <a class="link link-hover">联系方式</a>
-          <a class="link link-hover">隐私政策</a>
-          <a class="link link-hover">服务条款</a>
+    <footer class="bg-gray-50 border-t border-gray-200 mt-16">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="text-center text-gray-600">
+          <p>&copy; 2024 音乐情感分析系统. All rights reserved.</p>
         </div>
-      </div>
-      <div>
-        <div class="grid grid-flow-col gap-4">
-          <a class="text-2xl hover:text-primary transition-colors">
-            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-              <path
-                d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z" />
-            </svg>
-          </a>
-          <a class="text-2xl hover:text-primary transition-colors">
-            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-              <path
-                d="M22.46 6c-.77.35-1.6.58-2.46.69.88-.53 1.56-1.37 1.88-2.38-.83.5-1.75.85-2.72 1.05C18.37 4.5 17.26 4 16 4c-2.35 0-4.27 1.92-4.27 4.29 0 .34.04.67.11.98C8.28 9.09 5.11 7.38 3 4.79c-.37.63-.58 1.37-.58 2.15 0 1.49.75 2.81 1.91 3.56-.71 0-1.37-.2-1.95-.5v.03c0 2.08 1.48 3.82 3.44 4.21a4.22 4.22 0 0 1-1.93.07 4.28 4.28 0 0 0 4 2.98 8.521 8.521 0 0 1-5.33 1.84c-.34 0-.68-.02-1.02-.06C3.44 20.29 5.7 21 8.12 21 16 21 20.33 14.46 20.33 8.79c0-.19 0-.37-.01-.56.84-.6 1.56-1.36 2.14-2.23z" />
-            </svg>
-          </a>
-          <a class="text-2xl hover:text-primary transition-colors">
-            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-              <path
-                d="M12.017 0C5.396 0 .029 5.367.029 11.987c0 5.079 3.158 9.417 7.618 11.174-.105-.949-.199-2.403.041-3.439.219-.937 1.406-5.957 1.406-5.957s-.359-.72-.359-1.781c0-1.663.967-2.911 2.168-2.911 1.024 0 1.518.769 1.518 1.688 0 1.029-.653 2.567-.992 3.992-.285 1.193.6 2.165 1.775 2.165 2.128 0 3.768-2.245 3.768-5.487 0-2.861-2.063-4.869-5.008-4.869-3.41 0-5.409 2.562-5.409 5.199 0 1.033.394 2.143.889 2.741.099.12.112.225.085.345-.09.375-.293 1.199-.334 1.363-.053.225-.172.271-.402.165-1.495-.69-2.433-2.878-2.433-4.646 0-3.776 2.748-7.252 7.92-7.252 4.158 0 7.392 2.967 7.392 6.923 0 4.135-2.607 7.462-6.233 7.462-1.214 0-2.357-.629-2.746-1.378l-.748 2.853c-.271 1.043-1.002 2.35-1.492 3.146C9.57 23.812 10.763 24.009 12.017 24.009c6.624 0 11.99-5.367 11.99-11.988C24.007 5.367 18.641.001.012.001z" />
-            </svg>
-          </a>
-        </div>
-      </div>
-      <div>
-        <p>Copyright © 2024 - {{ serverConfig.VITE_APP_TITLE }}. All rights reserved.</p>
       </div>
     </footer>
   </div>
 </template>
 
 <script setup lang="ts">
-import serverConfig from '@/configs'
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
+import ReceiveFiles from '@/components/common/FileUpload/ReceiveFiles.vue'
+import { ElMessage } from 'element-plus'
 
-interface Button {
-  text: string
-  class: string
-}
+// 录音相关状态
+const microphonePermission = ref(false)
+const microphoneDevices = ref<MediaDeviceInfo[]>([])
+const selectedMicrophone = ref('')
+const isRecording = ref(false)
+const recordingDuration = ref(0)
+const mediaRecorder = ref<MediaRecorder | null>(null)
+const recordingTimer = ref<number | null>(null)
+const recordingSection = ref<HTMLElement | null>(null)
 
-interface Feature {
-  id: number
-  icon: string
-  title: string
-  description: string
-  delay: number
-}
-
-interface Stat {
-  id: number
-  animatedValue: any
-  targetValue: number
-  suffix: string
-  title: string
-  delay: number
-}
-
-// 英雄区域数据
-const heroSection: {
-  title: string
-  description: string
-  primaryButton: Button
-  secondaryButton: Button
-} = {
-  title: '欢迎来到现代化管理系统',
-  description: '高效、安全、易用的企业级解决方案，助力您的业务数字化转型',
-  primaryButton: {
-    text: '立即开始',
-    class: 'btn btn-primary btn-lg'
-  },
-  secondaryButton: {
-    text: '了解更多',
-    class: 'btn btn-outline btn-lg'
-  }
-}
-
-// 特性数据
-const featuresSection: {
-  title: string
-  subtitle: string
-  features: Feature[]
-} = {
-  title: '核心特性',
-  subtitle: '为您提供全方位的解决方案',
-  features: [
-    {
-      id: 1,
-      icon: '🚀',
-      title: '高性能',
-      description: '采用最新技术栈，确保系统运行流畅高效',
-      delay: 200
-    },
-    {
-      id: 2,
-      icon: '🔒',
-      title: '安全可靠',
-      description: '多层安全防护，保障您的数据安全无忧',
-      delay: 400
-    },
-    {
-      id: 3,
-      icon: '📱',
-      title: '响应式设计',
-      description: '完美适配各种设备，随时随地轻松使用',
-      delay: 600
-    }
-  ]
-}
-
-// 统计数据
-const statsSection: { stats: Stat[] } = {
-  stats: [
-    {
-      id: 1,
-      animatedValue: ref(0),
-      targetValue: 10000,
-      suffix: '+',
-      title: '活跃用户',
-      delay: 200
-    },
-    {
-      id: 2,
-      animatedValue: ref(0),
-      targetValue: 500,
-      suffix: '+',
-      title: '项目数量',
-      delay: 400
-    },
-    {
-      id: 3,
-      animatedValue: ref(0),
-      targetValue: 99,
-      suffix: '%',
-      title: '系统稳定性',
-      delay: 600
-    },
-    {
-      id: 4,
-      animatedValue: ref(0),
-      targetValue: 95,
-      suffix: '%',
-      title: '客户满意度',
-      delay: 800
-    }
-  ]
-}
-
-// CTA区域数据
-const ctaSection: {
-  title: string
-  description: string
-  buttons: Button[]
-} = {
-  title: '准备开始了吗？',
-  description: '立即体验我们的系统，开启您的数字化转型之旅',
-  buttons: [
-    {
-      text: '免费试用',
-      class: 'btn btn-primary btn-lg'
-    },
-    {
-      text: '联系我们',
-      class: 'btn btn-outline btn-lg'
-    }
-  ]
-}
-
-// 数字动画函数
-const animateNumber = (target: { value: number }, finalValue: number, duration: number = 2000): void => {
-  const startTime = Date.now()
-  const startValue = 0
-
-  const updateNumber = (): void => {
-    const currentTime = Date.now()
-    const elapsed = currentTime - startTime
-    const progress = Math.min(elapsed / duration, 1)
-
-    // 使用缓动函数
-    const easeOutQuart = 1 - Math.pow(1 - progress, 4)
-    target.value = Math.floor(startValue + (finalValue - startValue) * easeOutQuart)
-
-    if (progress < 1) {
-      requestAnimationFrame(updateNumber)
-    }
-  }
-
-  requestAnimationFrame(updateNumber)
-}
-
-onMounted(() => {
-  // 延迟启动数字动画
-  setTimeout(() => {
-    statsSection.stats.forEach(stat => {
-      animateNumber(stat.animatedValue, stat.targetValue)
+// 滚动到录音区域
+function scrollToRecording() {
+  if (recordingSection.value) {
+    recordingSection.value.scrollIntoView({ 
+      behavior: 'smooth',
+      block: 'start'
     })
-  }, 1000)
+  }
+}
+
+// 请求麦克风权限
+async function requestMicrophonePermission() {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+    microphonePermission.value = true
+    // 停止临时流
+    stream.getTracks().forEach(track => track.stop())
+    // 获取麦克风设备列表
+    await getMicrophoneDevices()
+    ElMessage.success('麦克风权限获取成功')
+  } catch (error) {
+    console.error('麦克风权限获取失败:', error)
+    ElMessage.error('麦克风权限获取失败，请检查浏览器设置')
+  }
+}
+
+// 获取麦克风设备列表
+async function getMicrophoneDevices() {
+  try {
+    const devices = await navigator.mediaDevices.enumerateDevices()
+    microphoneDevices.value = devices.filter(device => device.kind === 'audioinput')
+    // 自动选择第一个设备
+    if (microphoneDevices.value.length > 0 && !selectedMicrophone.value) {
+      selectedMicrophone.value = microphoneDevices.value[0].deviceId
+    }
+  } catch (error) {
+    console.error('获取麦克风设备失败:', error)
+    ElMessage.error('获取麦克风设备失败')
+  }
+}
+
+// 开始录音
+async function startRecording() {
+  if (!selectedMicrophone.value) {
+    ElMessage.warning('请先选择麦克风设备')
+    return
+  }
+
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      audio: {
+        deviceId: selectedMicrophone.value
+      }
+    })
+
+    mediaRecorder.value = new MediaRecorder(stream)
+    const chunks: Blob[] = []
+
+    mediaRecorder.value.ondataavailable = (event) => {
+      if (event.data.size > 0) {
+        chunks.push(event.data)
+      }
+    }
+
+    mediaRecorder.value.onstop = () => {
+      const blob = new Blob(chunks, { type: 'audio/wav' })
+      const file = new File([blob], `recording_${Date.now()}.wav`, { type: 'audio/wav' })
+      handleRecordingComplete(file)
+      // 停止所有音频轨道
+      stream.getTracks().forEach(track => track.stop())
+    }
+
+    mediaRecorder.value.start()
+    isRecording.value = true
+    recordingDuration.value = 0
+    
+    // 开始计时
+    recordingTimer.value = window.setInterval(() => {
+      recordingDuration.value++
+    }, 1000)
+
+    ElMessage.success('开始录音')
+  } catch (error) {
+    console.error('录音开始失败:', error)
+    ElMessage.error('录音开始失败')
+  }
+}
+
+// 停止录音
+function stopRecording() {
+  if (mediaRecorder.value && isRecording.value) {
+    mediaRecorder.value.stop()
+    isRecording.value = false
+    
+    if (recordingTimer.value) {
+      clearInterval(recordingTimer.value)
+      recordingTimer.value = null
+    }
+    
+    ElMessage.success('录音已停止')
+  }
+}
+
+// 处理录音完成
+function handleRecordingComplete(file: File) {
+  console.log('录音完成:', file)
+  ElMessage.success(`录音完成: ${file.name}`)
+  // 这里可以添加录音文件的处理逻辑，比如上传到服务器进行分析
+}
+
+// 处理文件选择
+function handleFileSelected(file: File) {
+  console.log('选择的文件:', file)
+  ElMessage.success(`已选择文件: ${file.name}`)
+  // 这里可以添加文件上传和分析的逻辑
+}
+
+// 检查初始权限状态
+onMounted(async () => {
+  try {
+    const permissions = await navigator.permissions.query({ name: 'microphone' as PermissionName })
+    if (permissions.state === 'granted') {
+      microphonePermission.value = true
+      await getMicrophoneDevices()
+    }
+  } catch (error) {
+    console.log('无法检查麦克风权限状态')
+  }
+})
+
+// 清理定时器
+onUnmounted(() => {
+  if (recordingTimer.value) {
+    clearInterval(recordingTimer.value)
+  }
+  if (mediaRecorder.value && isRecording.value) {
+    mediaRecorder.value.stop()
+  }
 })
 </script>
 
 <style scoped>
 /* 自定义样式 */
-.hero {
-  background-image:
-    radial-gradient(at 40% 20%, hsla(28, 100%, 74%, 1) 0px, transparent 50%),
-    radial-gradient(at 80% 0%, hsla(189, 100%, 56%, 1) 0px, transparent 50%),
-    radial-gradient(at 0% 50%, hsla(355, 100%, 93%, 1) 0px, transparent 50%),
-    radial-gradient(at 80% 50%, hsla(340, 100%, 76%, 1) 0px, transparent 50%),
-    radial-gradient(at 0% 100%, hsla(22, 100%, 77%, 1) 0px, transparent 50%),
-    radial-gradient(at 80% 100%, hsla(242, 100%, 70%, 1) 0px, transparent 50%),
-    radial-gradient(at 0% 0%, hsla(343, 100%, 76%, 1) 0px, transparent 50%);
-}
-
-.card {
-  transition: transform 0.3s ease;
-}
-
-.card:hover {
-  transform: translateY(-5px);
-}
-
-.btn {
-  transition: all 0.3s ease;
-}
-
-.btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+.bg-gradient-to-br {
+  background: linear-gradient(to bottom right, #eff6ff, #faf5ff);
 }
 </style>

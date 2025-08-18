@@ -31,8 +31,12 @@ declare module 'vue-router/auto-routes' {
     '/admin/userManage/': RouteRecordInfo<'/admin/userManage/', '/admin/userManage', Record<never, never>, Record<never, never>>,
     '/auth/login/': RouteRecordInfo<'/auth/login/', '/auth/login', Record<never, never>, Record<never, never>>,
     '/auth/Register/': RouteRecordInfo<'/auth/Register/', '/auth/Register', Record<never, never>, Record<never, never>>,
+    '/emotion_result/': RouteRecordInfo<'/emotion_result/', '/emotion_result', Record<never, never>, Record<never, never>>,
+    '/help/': RouteRecordInfo<'/help/', '/help', Record<never, never>, Record<never, never>>,
+    '/history/': RouteRecordInfo<'/history/', '/history', Record<never, never>, Record<never, never>>,
     '/knowledge/': RouteRecordInfo<'/knowledge/', '/knowledge', Record<never, never>, Record<never, never>>,
     '/motion-demo': RouteRecordInfo<'/motion-demo', '/motion-demo', Record<never, never>, Record<never, never>>,
+    '/profile/': RouteRecordInfo<'/profile/', '/profile', Record<never, never>, Record<never, never>>,
     '/stats/': RouteRecordInfo<'/stats/', '/stats', Record<never, never>, Record<never, never>>,
     '/userInfo/': RouteRecordInfo<'/userInfo/', '/userInfo', Record<never, never>, Record<never, never>>,
   }
@@ -100,12 +104,28 @@ declare module 'vue-router/auto-routes' {
       routes: '/auth/Register/'
       views: never
     }
+    'src/pages/emotion_result/index.vue': {
+      routes: '/emotion_result/'
+      views: never
+    }
+    'src/pages/help/index.vue': {
+      routes: '/help/'
+      views: never
+    }
+    'src/pages/history/index.vue': {
+      routes: '/history/'
+      views: never
+    }
     'src/pages/knowledge/index.vue': {
       routes: '/knowledge/'
       views: never
     }
     'src/pages/motion-demo.vue': {
       routes: '/motion-demo'
+      views: never
+    }
+    'src/pages/profile/index.vue': {
+      routes: '/profile/'
       views: never
     }
     'src/pages/stats/index.vue': {
