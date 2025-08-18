@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50">
+  <div class="min-h-screen  from-blue-50 to-purple-50">
 
     <!-- 主要内容区域 -->
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -18,7 +18,10 @@
           >
             开始分析
           </button>
-          <button class="bg-white hover:bg-gray-50 text-gray-700 px-8 py-3 rounded-lg text-lg font-medium border border-gray-300 transition-colors">
+          <button 
+            @click="router.push('/help')"
+            class="bg-white hover:bg-gray-50 text-gray-700 px-8 py-3 rounded-lg text-lg font-medium border border-gray-300 transition-colors"
+          >
             了解更多
           </button>
         </div>
@@ -99,39 +102,66 @@
 
             <!-- 录音控制 -->
             <div class="flex flex-col items-center space-y-4">
-              <div class="w-20 h-20 rounded-full flex items-center justify-center transition-colors" :class="{
-                'bg-red-100': !isRecording,
-                'bg-red-500 animate-pulse': isRecording
-              }">
-                <svg class="w-10 h-10" :class="{
-                  'text-red-600': !isRecording,
-                  'text-white': isRecording
-                }" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"></path>
-                  <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"></path>
-                </svg>
+              <!-- 录音按钮和动画 -->
+              <div class="relative">
+                <div class="w-20 h-20 rounded-full flex items-center justify-center transition-all duration-300" :class="{
+                  'bg-red-100': !isRecording && !isUploading,
+                  'bg-red-500': isRecording,
+                  'bg-blue-500': isUploading
+                }">
+                  <!-- 录音时的脉冲动画 -->
+                  <div v-if="isRecording" class="absolute inset-0 rounded-full bg-red-500 animate-ping opacity-75"></div>
+                  <div v-if="isRecording" class="absolute inset-2 rounded-full bg-red-400 animate-pulse"></div>
+                  
+                  <!-- 上传时的旋转动画 -->
+                  <div v-if="isUploading" class="absolute inset-0 rounded-full border-4 border-blue-200 border-t-blue-500 animate-spin"></div>
+                  
+                  <svg class="w-10 h-10 relative z-10" :class="{
+                    'text-red-600': !isRecording && !isUploading,
+                    'text-white': isRecording || isUploading
+                  }" fill="currentColor" viewBox="0 0 24 24">
+                    <path v-if="!isUploading" d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"></path>
+                    <path v-if="!isUploading" d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"></path>
+                    <!-- 上传图标 -->
+                    <path v-if="isUploading" d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"></path>
+                  </svg>
+                </div>
               </div>
               
               <div class="flex space-x-4">
                 <button 
                   v-if="!isRecording"
                   @click="startRecording"
-                  :disabled="!selectedMicrophone"
+                  :disabled="!selectedMicrophone || isUploading"
                   class="bg-red-600 hover:bg-red-700 disabled:bg-gray-400 text-white px-6 py-3 rounded-lg font-medium transition-colors"
                 >
-                  开始录音
+                  {{ isUploading ? '上传中...' : '开始录音' }}
                 </button>
                 <button 
                   v-else
                   @click="stopRecording"
-                  class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
+                  :disabled="isUploading"
+                  class="bg-gray-600 hover:bg-gray-700 disabled:bg-gray-400 text-white px-6 py-3 rounded-lg font-medium transition-colors"
                 >
                   停止录音
                 </button>
               </div>
               
-              <div v-if="isRecording" class="text-sm text-gray-600">
-                录音时长: {{ recordingDuration }}s
+              <!-- 录音时长显示 -->
+              <div v-if="isRecording" class="text-sm text-gray-600 flex items-center space-x-2">
+                <div class="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+                <span>录音时长: {{ recordingDuration }}s</span>
+              </div>
+              
+              <!-- 上传进度显示 -->
+              <div v-if="isUploading" class="w-full max-w-xs">
+                <div class="flex items-center justify-between text-sm text-gray-600 mb-2">
+                  <span>上传进度</span>
+                  <span>{{ Math.round(uploadProgress) }}%</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2">
+                  <div class="bg-blue-500 h-2 rounded-full transition-all duration-300" :style="{ width: uploadProgress + '%' }"></div>
+                </div>
               </div>
             </div>
           </div>
@@ -139,9 +169,41 @@
       </div>
 
       <!-- 上传区域 -->
-      <div class="bg-white rounded-lg p-8 shadow-sm border border-gray-200">
+      <div class="bg-white rounded-lg p-8 shadow-sm border border-gray-200 relative">
         <h3 class="text-2xl font-semibold text-gray-900 mb-6 text-center">上传音频文件进行情感分析</h3>
-        <div class="h-64">
+        
+        <!-- 上传遮罩层 -->
+        <div v-if="isUploading" class="absolute inset-0 bg-white bg-opacity-90 rounded-lg flex flex-col items-center justify-center z-10">
+          <div class="flex flex-col items-center space-y-4">
+            <!-- 上传动画 -->
+            <div class="relative">
+              <div class="w-16 h-16 border-4 border-blue-200 border-t-blue-500 rounded-full animate-spin"></div>
+              <div class="absolute inset-0 flex items-center justify-center">
+                <svg class="w-8 h-8 text-blue-500" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"></path>
+                </svg>
+              </div>
+            </div>
+            
+            <div class="text-center">
+              <p class="text-lg font-medium text-gray-900 mb-2">正在上传并分析音频...</p>
+              <p class="text-sm text-gray-600">请稍候，这可能需要几秒钟</p>
+            </div>
+            
+            <!-- 进度条 -->
+            <div class="w-64">
+              <div class="flex items-center justify-between text-sm text-gray-600 mb-2">
+                <span>上传进度</span>
+                <span>{{ Math.round(uploadProgress) }}%</span>
+              </div>
+              <div class="w-full bg-gray-200 rounded-full h-2">
+                <div class="bg-blue-500 h-2 rounded-full transition-all duration-300" :style="{ width: uploadProgress + '%' }"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="h-64" :class="{ 'opacity-50 pointer-events-none': isUploading }">
           <ReceiveFiles
             :allowSuffix="['mp3', 'wav', 'flac', 'aac', 'm4a', 'ogg']"
             :maxSize="50 * 1024 * 1024"
@@ -166,8 +228,11 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
+import { useRouter } from 'vue-router'
 import ReceiveFiles from '@/components/common/FileUpload/ReceiveFiles.vue'
 import { ElMessage } from 'element-plus'
+import { uploadClientAudio } from '@/api/user/client'
+import type { ClientUploadResponse } from '@/types/apis/client_T'
 
 // 录音相关状态
 const microphonePermission = ref(false)
@@ -178,6 +243,13 @@ const recordingDuration = ref(0)
 const mediaRecorder = ref<MediaRecorder | null>(null)
 const recordingTimer = ref<number | null>(null)
 const recordingSection = ref<HTMLElement | null>(null)
+
+// 上传相关状态
+const isUploading = ref(false)
+const uploadProgress = ref(0)
+
+// 路由
+const router = useRouter()
 
 // 滚动到录音区域
 function scrollToRecording() {
@@ -283,17 +355,83 @@ function stopRecording() {
 }
 
 // 处理录音完成
-function handleRecordingComplete(file: File) {
+async function handleRecordingComplete(file: File) {
   console.log('录音完成:', file)
   ElMessage.success(`录音完成: ${file.name}`)
-  // 这里可以添加录音文件的处理逻辑，比如上传到服务器进行分析
+  
+  // 上传录音文件进行分析
+  await uploadAudioFile(file)
 }
 
 // 处理文件选择
-function handleFileSelected(file: File) {
+async function handleFileSelected(file: File) {
   console.log('选择的文件:', file)
   ElMessage.success(`已选择文件: ${file.name}`)
-  // 这里可以添加文件上传和分析的逻辑
+  
+  // 上传文件进行分析
+  await uploadAudioFile(file)
+}
+
+// 上传音频文件进行分析
+async function uploadAudioFile(file: File) {
+  if (isUploading.value) {
+    ElMessage.warning('正在上传中，请稍候...')
+    return
+  }
+
+  isUploading.value = true
+  uploadProgress.value = 0
+  
+  try {
+    ElMessage.info('开始上传音频文件...')
+    
+    // 模拟上传进度
+    const progressInterval = setInterval(() => {
+      if (uploadProgress.value < 90) {
+        uploadProgress.value += Math.random() * 20
+      }
+    }, 200)
+    
+    const response: ClientUploadResponse = await uploadClientAudio(file)
+    
+    clearInterval(progressInterval)
+    uploadProgress.value = 100
+    
+    console.log('上传结果:', response)
+    
+    if (response.code === 200) {
+      ElMessage.success('音频上传成功，分析完成！')
+      console.log('分析结果:', {
+        analysis_id: response.data.analysis_id,
+        audio_file: response.data.audio_file,
+        emotion_analysis: response.data.emotion_analysis
+      })
+      
+      // 延迟一下让用户看到100%的进度，然后跳转到结果页面
+      setTimeout(() => {
+        isUploading.value = false
+        uploadProgress.value = 0
+        
+        // 跳转到情感分析结果页面
+        if (response.data && response.data.analysis_id) {
+          router.push(`/emotion_result?id=${response.data.analysis_id}`)
+        }
+      }, 1000)
+      
+      return // 成功时不执行finally块中的重置
+    } else {
+      ElMessage.error(response.message || '上传失败')
+    }
+  } catch (error) {
+    console.error('上传失败:', error)
+    ElMessage.error('音频上传失败，请重试')
+  } finally {
+    // 只有在失败时才重置状态
+    if (isUploading.value) {
+      isUploading.value = false
+      uploadProgress.value = 0
+    }
+  }
 }
 
 // 检查初始权限状态

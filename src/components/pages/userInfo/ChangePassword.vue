@@ -1,5 +1,5 @@
 <template>
-  <div class="change-password">
+  <div class="bg-white/70 rounded-lg p-5 border border-gray-200/30 backdrop-blur-[10px] transition-all duration-200 hover:bg-white/80 hover:border-gray-200/50">
     <el-form ref="formRef" :model="formData" :rules="rules" label-width="80px" @submit.prevent="handleSubmit">
       <!-- 原密码 -->
       <el-form-item label="原密码" prop="oldPassword">
@@ -115,81 +115,50 @@ const handleSubmit = async () => {
 }
 </script>
 
-<style scoped lang="scss">
-.change-password {
-  background: white;
-  border-radius: 16px;
-  padding: 24px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  border: 1px solid rgba(229, 231, 235, 0.8);
+<style scoped>
+:deep(.el-form-item) {
+  margin-bottom: 20px;
+}
+
+:deep(.el-form-item__label) {
+  font-weight: 600;
+  color: #374151;
+  font-size: 14px;
+}
+
+:deep(.el-input__wrapper) {
+  border-radius: 8px;
+  border: 2px solid #e5e7eb;
   transition: all 0.3s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
 
-  &:hover {
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
-    transform: translateY(-2px);
-  }
+:deep(.el-input__wrapper:hover) {
+  border-color: #d1d5db;
+}
 
-  .form-control {
-    .label-text {
-      font-weight: 500;
-    }
-  }
+:deep(.el-input__wrapper.is-focus) {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
 
-  .input-error {
-    border-color: hsl(var(--error));
-  }
+:deep(.el-button) {
+  border-radius: 8px;
+  font-weight: 600;
+  padding: 12px 24px;
+  transition: all 0.3s ease;
+}
 
-  .alert {
-    border-radius: 0.5rem;
-  }
+:deep(.el-button--primary) {
+  background: #3b82f6;
+  border: none;
+}
 
-  // Element Plus 表单样式优化
-  :deep(.el-form-item) {
-    margin-bottom: 20px;
+:deep(.el-button--primary:hover) {
+  background: #2563eb;
+}
 
-    .el-form-item__label {
-      font-weight: 600;
-      color: #374151;
-      font-size: 14px;
-    }
-
-    .el-input__wrapper {
-      border-radius: 8px;
-      border: 2px solid #e5e7eb;
-      transition: all 0.3s ease;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-
-      &:hover {
-        border-color: #d1d5db;
-      }
-
-      &.is-focus {
-        border-color: #3b82f6;
-        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-      }
-    }
-
-    .el-button {
-      border-radius: 8px;
-      font-weight: 600;
-      padding: 12px 24px;
-      transition: all 0.3s ease;
-
-      &.el-button--primary {
-        background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-        border: none;
-        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-
-        &:hover {
-          transform: translateY(-1px);
-          box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
-        }
-
-        &:active {
-          transform: translateY(0);
-        }
-      }
-    }
-  }
+:deep(.el-button--primary:active) {
+  background: #1d4ed8;
 }
 </style>

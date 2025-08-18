@@ -20,9 +20,9 @@ export const defaultMenuItems: MenuItem[] = [
     icon: null,
   },
   {
-    id: "profile",
+    id: "userInfo",
     label: "个人中心",
-    href: "/profile",
+    href: "/userInfo",
     icon: null,
   },
   {
