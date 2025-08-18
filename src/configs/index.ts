@@ -8,89 +8,32 @@ const FileUploadUrl: string = (import.meta.env.VITE_FILE_UPLOAD_URL as string)
 // 主菜单配置（用于Header组件）
 export const defaultMenuItems: MenuItem[] = [
   {
-    id: 'dashboard',
-    label: 'menu.dashboard',
-    href: '/dashboard',
+    id: "home",
+    label: "首页",
+    href: "/",
     icon: null,
     hide: true,
   },
   {
-    id: 'stats',
-    label: 'menu.stats',
-    href: '/stats',
+    id: "history",
+    label: "分析历史",
+    href: "/history",
     icon: null,
   },
   {
-    id: 'knowledge',
-    label: 'menu.knowledge',
-    href: '/knowledge',
+    id: "profile",
+    label: "个人中心",
+    href: "/profile",
     icon: null,
   },
+
   {
-    id: 'system',
-    label: 'menu.system',
-    icon: null,
-    hide: true,
-    children: [
-      {
-        id: 'user-management',
-        label: 'menu.userManagement',
-        href: '/system/users',
-      },
-      {
-        id: 'role-management',
-        label: 'menu.roleManagement',
-        href: '/system/roles',
-      },
-      {
-        id: 'permission',
-        label: 'menu.permission',
-        children: [
-          {
-            id: 'menu-permission',
-            label: 'menu.menuPermission',
-            href: '/system/permission/menu',
-          },
-          {
-            id: 'api-permission',
-            label: 'menu.apiPermission',
-            href: '/system/permission/api',
-            hide: true,
-          },
-        ],
-      },
-    ],
-  },
-  {
-    id: 'content',
-    label: 'menu.content',
-    icon: null,
-    children: [
-      {
-        id: 'articles',
-        label: 'menu.articles',
-        href: '/content/articles',
-      },
-      {
-        id: 'categories',
-        label: 'menu.categories',
-        href: '/content/categories',
-      },
-    ],
-  },
-  {
-    id: 'settings',
-    label: 'menu.settings',
-    href: '/settings',
+    id: "admin",
+    label: "menu.admin",
+    href: "/admin",
     icon: null,
   },
-  {
-    id: 'admin',
-    label: 'menu.admin',
-    href: '/admin',
-    icon: null,
-  },
-]
+];
 
 // 管理后台菜单配置
 export const adminMenuItems: AdminHeader[] = [
