@@ -146,7 +146,13 @@ async function handleDelete(row: AnalysisRecord) {
 
     await deleteAnalysisAPI(row.id)
     ElMessage.success('删除成功')
-    fetchHistoryData()
+
+    // 从本地数组中移除记录，避免重新刷新
+    const index = tableData.value.findIndex(item => item.id === row.id)
+    if (index > -1) {
+      tableData.value.splice(index, 1)
+      total.value = Math.max(0, total.value - 1)
+    }
   } catch (error) {
     if (error !== 'cancel') {
       console.error('删除失败:', error)
@@ -176,7 +182,12 @@ async function handleBatchDelete() {
     const ids = multipleSelection.value.map(item => item.id)
     await Promise.all(ids.map(id => deleteAnalysisAPI(id)))
     ElMessage.success('批量删除成功')
-    fetchHistoryData()
+
+    // 从本地数组中移除记录，避免重新刷新
+    const deletedCount = multipleSelection.value.length
+    tableData.value = tableData.value.filter(item => !ids.includes(item.id))
+    total.value = Math.max(0, total.value - deletedCount)
+    multipleSelection.value = []
   } catch (error) {
     if (error !== 'cancel') {
       console.error('批量删除失败:', error)
