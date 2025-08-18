@@ -33,7 +33,7 @@
               </div>
               <div class="bg-gray-50 p-4 rounded-lg">
                 <div class="text-sm text-gray-500 mb-2">音频时长</div>
-                <div class="text-base text-gray-900 font-medium">{{ detail.audio_file_detail.duration_formatted }}</div>
+                <div class="text-base text-gray-900 font-medium">{{ detail.audio_file_detail.duration_formatted === '00:00' ? '无法获取' : detail.audio_file_detail.duration_formatted }}</div>
               </div>
               <div class="bg-gray-50 p-4 rounded-lg">
                 <div class="text-sm text-gray-500 mb-2">采样率</div>
