@@ -2,26 +2,17 @@
 import { ref, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
-
-// 用户数据类型定义
-interface User {
-  id: number
-  username: string
-  email: string
-  phone: string
-  status: 'active' | 'inactive'
-  role: 'user' | 'admin'
-  registerTime: string
-  lastLogin: string
-}
+import { getUsersAPI, addUserAPI, editUserAPI, deleteUserAPI, userDetailAPI } from '@/api/admin/users'
+import type { User, UserQueryParams } from '@/types/components/admin'
 
 // 表单数据类型
 interface UserForm {
   username: string
   email: string
-  phone: string
-  status: 'active' | 'inactive'
-  role: 'user' | 'admin'
+  phone?: string
+  is_active: boolean
+  is_staff: boolean
+  is_superuser: boolean
   password?: string
 }
 
@@ -40,44 +31,14 @@ const userForm = ref<UserForm>({
   username: '',
   email: '',
   phone: '',
-  status: 'active',
-  role: 'user',
+  is_active: true,
+  is_staff: false,
+  is_superuser: false,
   password: ''
 })
 
-// 模拟用户数据
-const users = ref<User[]>([
-  {
-    id: 1,
-    username: '张三',
-    email: 'zhangsan@example.com',
-    phone: '13800138001',
-    status: 'active',
-    role: 'user',
-    registerTime: '2024-01-15 10:30:00',
-    lastLogin: '2024-01-20 14:25:00'
-  },
-  {
-    id: 2,
-    username: '李四',
-    email: 'lisi@example.com',
-    phone: '13800138002',
-    status: 'active',
-    role: 'admin',
-    registerTime: '2024-01-10 09:15:00',
-    lastLogin: '2024-01-20 16:45:00'
-  },
-  {
-    id: 3,
-    username: '王五',
-    email: 'wangwu@example.com',
-    phone: '13800138003',
-    status: 'inactive',
-    role: 'user',
-    registerTime: '2024-01-08 11:20:00',
-    lastLogin: '2024-01-18 09:30:00'
-  }
-])
+// 用户数据
+const users = ref<User[]>([])
 
 // 表单验证规则
 const rules: FormRules<UserForm> = {
@@ -90,7 +51,6 @@ const rules: FormRules<UserForm> = {
     { type: 'email', message: '请输入正确的邮箱地址', trigger: 'blur' }
   ],
   phone: [
-    { required: true, message: '请输入手机号码', trigger: 'blur' },
     { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号码', trigger: 'blur' }
   ],
   password: [
@@ -116,10 +76,33 @@ const paginatedUsers = computed(() => {
   return filteredUsers.value.slice(start, end)
 })
 
+// 获取用户列表
+async function fetchUsers() {
+  try {
+    loading.value = true
+    const params: UserQueryParams = {
+      query: searchKeyword.value,
+      page: currentPage.value,
+      page_size: pageSize.value
+    }
+
+    const response = await getUsersAPI(params)
+    if (response.data) {
+      users.value = response.data.users || []
+      total.value = response.data.total || 0
+    }
+  } catch (error) {
+    console.error('获取用户列表失败:', error)
+    ElMessage.error('获取用户列表失败，请检查网络连接')
+  } finally {
+    loading.value = false
+  }
+}
+
 // 方法
 function handleSearch() {
   currentPage.value = 1
-  total.value = filteredUsers.value.length
+  fetchUsers()
 }
 
 function handleAdd() {
@@ -128,8 +111,9 @@ function handleAdd() {
     username: '',
     email: '',
     phone: '',
-    status: 'active',
-    role: 'user',
+    is_active: true,
+    is_staff: false,
+    is_superuser: false,
     password: ''
   }
   dialogVisible.value = true
@@ -140,72 +124,83 @@ function handleEdit(user: User) {
   userForm.value = {
     username: user.username,
     email: user.email,
-    phone: user.phone,
-    status: user.status,
-    role: user.role
+    phone: '',
+    is_active: user.is_active,
+    is_staff: user.is_staff,
+    is_superuser: user.is_superuser
   }
   dialogVisible.value = true
 }
 
-function handleDelete(user: User) {
-  ElMessageBox.confirm(
-    `确定要删除用户 "${user.username}" 吗？`,
-    '删除确认',
-    {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
-      type: 'warning'
-    }
-  ).then(() => {
-    const index = users.value.findIndex(u => u.id === user.id)
-    if (index > -1) {
-      users.value.splice(index, 1)
+async function handleDelete(user: User) {
+  try {
+    await ElMessageBox.confirm(
+      `确定要删除用户 "${user.username}" 吗？`,
+      '删除确认',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }
+    )
+
+    if (user.id) {
+      await deleteUserAPI(user.id)
       ElMessage.success('删除成功')
-      total.value = filteredUsers.value.length
+      fetchUsers()
     }
-  }).catch(() => {
-    ElMessage.info('已取消删除')
-  })
+  } catch (error: any) {
+    if (error !== 'cancel') {
+      console.error('删除用户失败:', error)
+      ElMessage.error('删除用户失败，请重试')
+    } else {
+      ElMessage.info('已取消删除')
+    }
+  }
 }
 
-function handleStatusChange(user: User) {
-  ElMessage.success(`用户状态已${user.status === 'active' ? '启用' : '禁用'}`)
+async function handleStatusChange(user: User) {
+  try {
+    if (user.id) {
+      await editUserAPI(user)
+      ElMessage.success(`用户状态已${user.is_active ? '启用' : '禁用'}`)
+      fetchUsers()
+    }
+  } catch (error) {
+    console.error('更新用户状态失败:', error)
+    ElMessage.error('更新用户状态失败，请重试')
+    // 恢复原状态
+    user.is_active = !user.is_active
+  }
 }
 
-function handleSubmit() {
+async function handleSubmit() {
   if (!formRef.value) return
 
-  formRef.value.validate((valid) => {
+  try {
+    const valid = await formRef.value.validate()
     if (valid) {
       loading.value = true
 
-      // 模拟API调用
-      setTimeout(() => {
-        if (isEdit.value) {
-          // 编辑用户逻辑
-          ElMessage.success('用户信息更新成功')
-        } else {
-          // 添加用户逻辑
-          const newUser: User = {
-            id: Date.now(),
-            username: userForm.value.username,
-            email: userForm.value.email,
-            phone: userForm.value.phone,
-            status: userForm.value.status,
-            role: userForm.value.role,
-            registerTime: new Date().toLocaleString(),
-            lastLogin: '-'
-          }
-          users.value.unshift(newUser)
-          ElMessage.success('用户添加成功')
-        }
+      if (isEdit.value) {
+        // 编辑用户逻辑
+        await editUserAPI(userForm.value as User)
+        ElMessage.success('用户信息更新成功')
+      } else {
+        // 添加用户逻辑
+        await addUserAPI(userForm.value as Omit<User, 'id'>)
+        ElMessage.success('用户添加成功')
+      }
 
-        loading.value = false
-        dialogVisible.value = false
-        total.value = filteredUsers.value.length
-      }, 1000)
+      dialogVisible.value = false
+      fetchUsers()
     }
-  })
+  } catch (error) {
+    console.error('操作失败:', error)
+    ElMessage.error(isEdit.value ? '更新用户失败，请重试' : '添加用户失败，请重试')
+  } finally {
+    loading.value = false
+  }
 }
 
 function handleCancel() {
@@ -214,17 +209,18 @@ function handleCancel() {
 
 function handlePageChange(page: number) {
   currentPage.value = page
+  fetchUsers()
 }
 
 function handleSizeChange(size: number) {
   pageSize.value = size
   currentPage.value = 1
+  fetchUsers()
 }
 
 onMounted(() => {
-  total.value = users.value.length
-})
-</script>
+  fetchUsers()
+})</script>
 
 <template>
   <div class="user-manage">
@@ -264,17 +260,23 @@ onMounted(() => {
         <el-table-column prop="username" label="用户名" width="120" />
         <el-table-column prop="email" label="邮箱" width="200" />
         <el-table-column prop="phone" label="手机号" width="130" />
-        <el-table-column prop="role" label="角色" width="100">
+        <el-table-column prop="is_active" label="状态" width="100">
           <template #default="{ row }">
-            <el-tag :type="row.role === 'admin' ? 'danger' : 'primary'">
-              {{ row.role === 'admin' ? '管理员' : '普通用户' }}
+            <el-switch v-model="row.is_active" @change="handleStatusChange(row)" />
+          </template>
+        </el-table-column>
+        <el-table-column prop="is_staff" label="员工" width="80">
+          <template #default="{ row }">
+            <el-tag :type="row.is_staff ? 'success' : 'info'">
+              {{ row.is_staff ? '是' : '否' }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="status" label="状态" width="100">
+        <el-table-column prop="is_superuser" label="超级用户" width="100">
           <template #default="{ row }">
-            <el-switch v-model="row.status" active-value="active" inactive-value="inactive"
-              @change="handleStatusChange(row)" />
+            <el-tag :type="row.is_superuser ? 'danger' : 'info'">
+              {{ row.is_superuser ? '是' : '否' }}
+            </el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="registerTime" label="注册时间" width="160" />
@@ -318,18 +320,14 @@ onMounted(() => {
           <el-input v-model="userForm.password" type="password" placeholder="请输入密码" show-password />
         </el-form-item>
 
-        <el-form-item label="角色" prop="role">
-          <el-select v-model="userForm.role" placeholder="请选择角色">
-            <el-option label="普通用户" value="user" />
-            <el-option label="管理员" value="admin" />
-          </el-select>
+        <el-form-item label="状态">
+          <el-switch v-model="userForm.is_active" active-text="启用" inactive-text="禁用" />
         </el-form-item>
-
-        <el-form-item label="状态" prop="status">
-          <el-radio-group v-model="userForm.status">
-            <el-radio value="active">启用</el-radio>
-            <el-radio value="inactive">禁用</el-radio>
-          </el-radio-group>
+        <el-form-item label="员工权限">
+          <el-switch v-model="userForm.is_staff" active-text="是" inactive-text="否" />
+        </el-form-item>
+        <el-form-item label="超级用户">
+          <el-switch v-model="userForm.is_superuser" active-text="是" inactive-text="否" />
         </el-form-item>
       </el-form>
 

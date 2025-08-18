@@ -3,6 +3,7 @@ import { ref, reactive, onMounted } from 'vue'
 import { Motion } from 'motion-v'
 import * as echarts from 'echarts'
 import { useRouter } from 'vue-router'
+import { ElMessage } from 'element-plus'
 import {
   User,
   VideoPlay,
@@ -11,6 +12,7 @@ import {
   Setting,
   TrendCharts
 } from '@element-plus/icons-vue'
+import { getDashboardStatsAPI, type DashboardStats, type RecentActivity } from '@/api/admin/dashboard'
 
 const router = useRouter()
 
@@ -53,18 +55,68 @@ const loading = ref(false)
 const emotionChartRef = ref<HTMLDivElement>()
 const trendChartRef = ref<HTMLDivElement>()
 
+// 情感分布类型
+interface EmotionDistribution {
+  happy: number
+  sad: number
+  angry: number
+  neutral: number
+  fear: number
+  surprise: number
+  disgust: number
+}
+
+// 统计数据类型
+interface StatsData {
+  totalUsers: number
+  todayAnalysis: number
+  totalMusic: number
+  activeModels: number
+  avgAccuracy: number
+  todayUsers: number
+  storageUsed: string
+  thisMonthAnalyses: number
+  emotionDistribution: EmotionDistribution
+  recentActivities: RecentActivity[]
+}
+
 // 统计数据
-const stats = reactive({
-  totalUsers: 1234,
-  todayAnalysis: 567,
-  totalMusic: 8901,
+const stats = reactive<StatsData>({
+  totalUsers: 0,
+  todayAnalysis: 0,
+  totalMusic: 0,
   activeModels: 3,
   avgAccuracy: 94.2,
-  todayUsers: 234
+  todayUsers: 0,
+  storageUsed: '0 GB',
+  thisMonthAnalyses: 0,
+  emotionDistribution: {
+    happy: 0,
+    sad: 0,
+    angry: 0,
+    neutral: 0,
+    fear: 0,
+    surprise: 0,
+    disgust: 0
+  },
+  recentActivities: []
 })
 
+// 快捷操作类型
+interface QuickAction {
+  title: string
+  description: string
+  icon: string
+  color: string
+  path: string
+  bgClass: string
+  iconClass: string
+  titleClass: string
+  descClass: string
+}
+
 // 快捷操作
-const quickActions = [
+const quickActions: QuickAction[] = [
   {
     title: '用户管理',
     description: '管理系统用户和权限',
@@ -79,7 +131,7 @@ const quickActions = [
   {
     title: '音乐管理',
     description: '上传和管理音乐文件',
-    icon: 'Headphone',
+    icon: 'Headset',
     color: 'green',
     path: '/admin/music',
     bgClass: 'bg-green-50 hover:bg-green-100',
@@ -127,16 +179,61 @@ function navigateTo(path: string) {
   router.push(path)
 }
 
+// 获取仪表板数据
+async function fetchDashboardData() {
+  try {
+    loading.value = true
+    const response = await getDashboardStatsAPI()
+
+    if (response.data) {
+      const data = response.data
+
+      // 用户统计数据
+      stats.totalUsers = data.user_stats?.total_users || 0
+      stats.todayUsers = data.user_stats?.active_users || 0
+
+      // 音频文件统计
+      stats.totalMusic = data.audio_stats?.total_files || 0
+
+      // 分析统计数据
+      stats.todayAnalysis = data.analysis_stats?.analyses_today || 0
+      stats.thisMonthAnalyses = data.analysis_stats?.analyses_week || 0
+
+      // 情感分布数据转换
+      if (data.emotion_distribution && Array.isArray(data.emotion_distribution)) {
+        const emotionMap: Record<string, number> = {}
+        data.emotion_distribution.forEach((item) => {
+          emotionMap[item.primary_emotion] = item.count
+        })
+
+        stats.emotionDistribution = {
+          happy: emotionMap.happy || 0,
+          sad: emotionMap.sad || 0,
+          angry: emotionMap.angry || 0,
+          neutral: emotionMap.neutral || 0,
+          fear: emotionMap.fear || 0,
+          surprise: emotionMap.surprise || 0,
+          disgust: emotionMap.disgust || 0
+        }
+      }
+
+      // 最近活动数据
+      stats.recentActivities = data.recent_activities || []
+
+      // 更新图表数据
+      updateCharts()
+    }
+  } catch (error) {
+    console.error('获取仪表板数据失败:', error)
+    ElMessage.error('获取仪表板数据失败，请检查网络连接')
+  } finally {
+    loading.value = false
+  }
+}
+
 // 刷新数据
 function refreshData() {
-  loading.value = true
-
-  setTimeout(() => {
-    // 模拟数据更新
-    stats.todayAnalysis = Math.floor(Math.random() * 1000) + 400
-    stats.todayUsers = Math.floor(Math.random() * 300) + 150
-    loading.value = false
-  }, 1000)
+  fetchDashboardData()
 }
 
 // 初始化情感分布图表
@@ -144,9 +241,19 @@ function initEmotionChart() {
   if (!emotionChartRef.value) return
 
   const chart = echarts.init(emotionChartRef.value)
+  updateEmotionChart(chart)
+}
+
+// 更新情感分布图表
+function updateEmotionChart(chart?: any) {
+  if (!chart && !emotionChartRef.value) return
+
+  const chartInstance = chart || (emotionChartRef.value ? echarts.getInstanceByDom(emotionChartRef.value) : null)
+  if (!chartInstance) return
+
   const option = {
     title: {
-      text: '今日情感分析分布',
+      text: '情感分析分布',
       left: 'center',
       textStyle: {
         fontSize: 16,
@@ -164,17 +271,18 @@ function initEmotionChart() {
         radius: ['40%', '70%'],
         center: ['50%', '60%'],
         data: [
-          { value: 156, name: '快乐', itemStyle: { color: '#67C23A' } },
-          { value: 123, name: '悲伤', itemStyle: { color: '#409EFF' } },
-          { value: 89, name: '平静', itemStyle: { color: '#909399' } },
-          { value: 67, name: '愤怒', itemStyle: { color: '#F56C6C' } },
-          { value: 45, name: '惊讶', itemStyle: { color: '#E6A23C' } },
-          { value: 87, name: '其他', itemStyle: { color: '#9C27B0' } }
+          { value: stats.emotionDistribution.happy, name: '快乐', itemStyle: { color: '#67C23A' } },
+          { value: stats.emotionDistribution.sad, name: '悲伤', itemStyle: { color: '#409EFF' } },
+          { value: stats.emotionDistribution.neutral, name: '平静', itemStyle: { color: '#909399' } },
+          { value: stats.emotionDistribution.angry, name: '愤怒', itemStyle: { color: '#F56C6C' } },
+          { value: stats.emotionDistribution.fear, name: '恐惧', itemStyle: { color: '#E6A23C' } },
+          { value: stats.emotionDistribution.surprise, name: '惊讶', itemStyle: { color: '#F78989' } },
+          { value: stats.emotionDistribution.disgust, name: '厌恶', itemStyle: { color: '#B88230' } }
         ]
       }
     ]
   }
-  chart.setOption(option)
+  chartInstance.setOption(option)
 }
 
 // 初始化趋势图表
@@ -230,10 +338,129 @@ function initTrendChart() {
   chart.setOption(option)
 }
 
+// 更新所有图表
+function updateCharts() {
+  setTimeout(() => {
+    updateEmotionChart()
+    updateTrendChart()
+  }, 100)
+}
+
+// 更新趋势图表
+function updateTrendChart(chart?: any) {
+  if (!chart && !trendChartRef.value) return
+
+  const chartInstance = chart || (trendChartRef.value ? echarts.getInstanceByDom(trendChartRef.value) : null)
+  if (!chartInstance) return
+
+  // 这里可以根据实际数据更新趋势图
+  const option = {
+    title: {
+      text: '近7天分析趋势',
+      left: 'center',
+      textStyle: {
+        fontSize: 16,
+        fontWeight: 'normal'
+      }
+    },
+    tooltip: {
+      trigger: 'axis'
+    },
+    xAxis: {
+      type: 'category',
+      data: ['周一', '周二', '周三', '周四', '周五', '周六', '周日']
+    },
+    yAxis: {
+      type: 'value',
+      name: '分析次数'
+    },
+    series: [
+      {
+        name: '分析次数',
+        type: 'line',
+        smooth: true,
+        data: [320, 432, 301, 534, 590, 530, stats.todayAnalysis],
+        itemStyle: {
+          color: '#409EFF'
+        },
+        areaStyle: {
+          color: {
+            type: 'linear',
+            x: 0,
+            y: 0,
+            x2: 0,
+            y2: 1,
+            colorStops: [
+              { offset: 0, color: 'rgba(64, 158, 255, 0.3)' },
+              { offset: 1, color: 'rgba(64, 158, 255, 0.1)' }
+            ]
+          }
+        }
+      }
+    ]
+  }
+  chartInstance.setOption(option)
+}
+
+// 获取情感标签
+function getEmotionLabel(emotion: string): string {
+  const emotionLabels: Record<string, string> = {
+    'happy': '快乐',
+    'sad': '悲伤',
+    'angry': '愤怒',
+    'neutral': '平静',
+    'fear': '恐惧',
+    'surprise': '惊讶',
+    'disgust': '厌恶'
+  }
+  return emotionLabels[emotion] || emotion
+}
+
+// 获取情感样式类
+function getEmotionClass(emotion: string): string {
+  const emotionClasses: Record<string, string> = {
+    'happy': 'bg-green-100 text-green-800',
+    'sad': 'bg-blue-100 text-blue-800',
+    'angry': 'bg-red-100 text-red-800',
+    'neutral': 'bg-gray-100 text-gray-800',
+    'fear': 'bg-yellow-100 text-yellow-800',
+    'surprise': 'bg-purple-100 text-purple-800',
+    'disgust': 'bg-orange-100 text-orange-800'
+  }
+  return emotionClasses[emotion] || 'bg-gray-100 text-gray-800'
+}
+
+// 格式化时间
+function formatTime(timeStr: string): string {
+  try {
+    const date = new Date(timeStr)
+    const now = new Date()
+    const diff = now.getTime() - date.getTime()
+    const minutes = Math.floor(diff / (1000 * 60))
+    const hours = Math.floor(diff / (1000 * 60 * 60))
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24))
+
+    if (minutes < 1) return '刚刚'
+    if (minutes < 60) return `${minutes}分钟前`
+    if (hours < 24) return `${hours}小时前`
+    if (days < 7) return `${days}天前`
+
+    return date.toLocaleDateString('zh-CN', {
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    })
+  } catch (error) {
+    return timeStr
+  }
+}
+
 onMounted(() => {
   setTimeout(() => {
     initEmotionChart()
     initTrendChart()
+    fetchDashboardData()
   }, 100)
 })
 </script>
@@ -303,7 +530,7 @@ onMounted(() => {
                 :whileHover="iconVariants.whileHover as any"
                 :transition="{ ...iconVariants.transition, delay: 0.6 } as any" class="text-green-500">
                 <el-icon size="32">
-                  <Headphone />
+                  <VideoPlay />
                 </el-icon>
               </Motion>
             </div>
@@ -381,8 +608,8 @@ onMounted(() => {
       </el-card>
     </Motion>
 
-    <!-- 图表区域 -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- 图表和活动区域 -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <!-- 情感分布图 -->
       <Motion :initial="cardVariants.initial" :animate="cardVariants.animate"
         :whileHover="cardVariants.whileHover as any" :transition="{ ...cardVariants.transition, delay: 0.9 } as any">
@@ -402,6 +629,36 @@ onMounted(() => {
             <span class="text-lg font-medium">分析趋势</span>
           </template>
           <div ref="trendChartRef" class="h-64"></div>
+        </el-card>
+      </Motion>
+
+      <!-- 最近活动 -->
+      <Motion :initial="cardVariants.initial" :animate="cardVariants.animate"
+        :whileHover="cardVariants.whileHover as any" :transition="{ ...cardVariants.transition, delay: 1.1 } as any">
+        <el-card>
+          <template #header>
+            <span class="text-lg font-medium">最近活动</span>
+          </template>
+          <div class="h-64 overflow-y-auto">
+            <div v-if="stats.recentActivities.length === 0"
+              class="flex items-center justify-center h-full text-gray-500">
+              暂无活动记录
+            </div>
+            <div v-else class="space-y-3">
+              <div v-for="activity in stats.recentActivities.slice(0, 8)" :key="activity.id"
+                class="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                <div class="flex-1">
+                  <div class="flex items-center space-x-2">
+                    <span class="text-sm font-medium text-gray-900">{{ activity.user }}</span>
+                    <span class="px-2 py-1 text-xs rounded-full" :class="getEmotionClass(activity.emotion)">{{
+                      getEmotionLabel(activity.emotion) }}</span>
+                  </div>
+                  <p class="text-xs text-gray-600 mt-1 truncate">{{ activity.audio_file }}</p>
+                  <p class="text-xs text-gray-400">{{ formatTime(activity.created_at) }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
         </el-card>
       </Motion>
     </div>

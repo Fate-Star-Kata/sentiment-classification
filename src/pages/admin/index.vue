@@ -128,6 +128,8 @@ const iconVariants = {
   box-shadow: 2px 0 8px rgba(0, 0, 0, 0.06);
   position: relative;
   overflow: hidden;
+  /* Prevent flexbox from shrinking the sidebar width on content overflow */
+  flex: 0 0 auto;
 }
 
 .el-aside {

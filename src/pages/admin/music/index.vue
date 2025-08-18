@@ -595,7 +595,9 @@ onMounted(() => {
           <template #default="{ row }">
             <div class="action-buttons">
               <el-button type="primary" size="small" @click="editMusic(row)">
-                <el-icon><Edit /></el-icon>
+                <el-icon>
+                  <Edit />
+                </el-icon>
                 编辑
               </el-button>
               <el-dropdown trigger="click">
@@ -606,11 +608,15 @@ onMounted(() => {
                 <template #dropdown>
                   <el-dropdown-menu>
                     <el-dropdown-item @click="reanalyze(row)">
-                      <el-icon><Refresh /></el-icon>
+                      <el-icon>
+                        <Refresh />
+                      </el-icon>
                       重新分析
                     </el-dropdown-item>
                     <el-dropdown-item @click="deleteMusic(row)" divided>
-                      <el-icon><Delete /></el-icon>
+                      <el-icon>
+                        <Delete />
+                      </el-icon>
                       删除
                     </el-dropdown-item>
                   </el-dropdown-menu>

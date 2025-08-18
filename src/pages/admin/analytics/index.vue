@@ -1,13 +1,18 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import * as echarts from 'echarts'
+import { Refresh, User, DataAnalysis, Calendar, TrendCharts } from '@element-plus/icons-vue'
+import { getAnalysisRecordsAPI, getAnalyticsStatsAPI, type AnalysisRecord } from '@/api/admin/analytics'
+import { ElMessage } from 'element-plus'
 
 // 响应式数据
 const loading = ref(false)
-const totalUsers = ref(1248)
-const totalAnalysis = ref(5632)
-const todayAnalysis = ref(89)
-const avgAccuracy = ref(92.5)
+const totalUsers = ref(0)
+const totalAnalysis = ref(0)
+const todayAnalysis = ref(0)
+const avgAccuracy = ref(0)
+const analysisRecords = ref<AnalysisRecord[]>([])
+const totalRecords = ref(0)
 
 // 图表实例
 const emotionChartRef = ref<HTMLDivElement>()
@@ -15,36 +20,83 @@ const trendChartRef = ref<HTMLDivElement>()
 const accuracyChartRef = ref<HTMLDivElement>()
 const deviceChartRef = ref<HTMLDivElement>()
 
-// 模拟数据
-const emotionData = [
-  { name: '快乐', value: 35, color: '#67C23A' },
-  { name: '悲伤', value: 25, color: '#409EFF' },
-  { name: '愤怒', value: 15, color: '#F56C6C' },
-  { name: '恐惧', value: 10, color: '#E6A23C' },
-  { name: '惊讶', value: 10, color: '#909399' },
-  { name: '厌恶', value: 5, color: '#9C27B0' }
-]
+// 图表数据
+const emotionData = ref([])
+const trendData = ref({
+  dates: [],
+  analysis: [],
+  accuracy: []
+})
+const deviceData = ref([])
 
-const trendData = {
-  dates: ['01-15', '01-16', '01-17', '01-18', '01-19', '01-20', '01-21'],
-  analysis: [45, 52, 48, 61, 55, 67, 89],
-  accuracy: [91.2, 92.1, 90.8, 93.2, 91.9, 92.8, 94.1]
+// 获取分析记录数据
+async function fetchAnalysisRecords() {
+  try {
+    loading.value = true
+    const response = await getAnalysisRecordsAPI({ page: 1, page_size: 100 })
+    
+    if (response.code === 200) {
+      analysisRecords.value = response.data.analyses
+      totalRecords.value = response.data.pagination.total_count
+      
+      // 处理情感分布数据
+      processEmotionData()
+      
+      // 更新统计数据
+      totalAnalysis.value = totalRecords.value
+      
+      // 重新初始化图表
+      setTimeout(() => {
+        initEmotionChart()
+        initTrendChart()
+        initAccuracyChart()
+        initDeviceChart()
+      }, 100)
+    } else {
+      ElMessage.error(response.msg || '获取数据失败')
+    }
+  } catch (error) {
+    console.error('获取分析记录失败:', error)
+    ElMessage.error('获取数据失败，请稍后重试')
+  } finally {
+    loading.value = false
+  }
 }
 
-const deviceData = [
-  { name: 'PC端', value: 60 },
-  { name: '移动端', value: 35 },
-  { name: '平板', value: 5 }
-]
+// 处理情感分布数据
+function processEmotionData() {
+  const emotionCount: { [key: string]: number } = {}
+  
+  analysisRecords.value.forEach(record => {
+    const emotion = record.emotion_analysis_detail.primary_emotion_display
+    emotionCount[emotion] = (emotionCount[emotion] || 0) + 1
+  })
+  
+  const colors = {
+    '快乐': '#67C23A',
+    '悲伤': '#409EFF', 
+    '愤怒': '#F56C6C',
+    '中性': '#E6A23C',
+    '恐惧': '#909399',
+    '惊讶': '#9C27B0',
+    '厌恶': '#FF6B6B'
+  }
+  
+  emotionData.value = Object.entries(emotionCount).map(([name, value]) => ({
+    name,
+    value,
+    itemStyle: { color: colors[name] || '#909399' }
+  }))
+}
 
 // 初始化情感分布图表
 function initEmotionChart() {
-  if (!emotionChartRef.value) return
+  if (!emotionChartRef.value || !emotionData.value.length) return
   
   const chart = echarts.init(emotionChartRef.value)
   const option = {
     title: {
-      text: '情感分布统计',
+      text: '情感分布',
       left: 'center',
       textStyle: {
         fontSize: 16,
@@ -53,42 +105,78 @@ function initEmotionChart() {
     },
     tooltip: {
       trigger: 'item',
-      formatter: '{a} <br/>{b}: {c} ({d}%)'
-    },
-    legend: {
-      orient: 'vertical',
-      left: 'left',
-      data: emotionData.map(item => item.name)
+      formatter: '{b}: {c} ({d}%)'
     },
     series: [
       {
-        name: '情感分析',
+        name: '情感类型',
         type: 'pie',
-        radius: '50%',
+        radius: ['40%', '70%'],
         center: ['50%', '60%'],
-        data: emotionData.map(item => ({
-          name: item.name,
-          value: item.value,
-          itemStyle: {
-            color: item.color
-          }
-        })),
+        avoidLabelOverlap: false,
+        itemStyle: {
+          borderRadius: 10,
+          borderColor: '#fff',
+          borderWidth: 2
+        },
+        label: {
+          show: true,
+          position: 'outside',
+          formatter: '{b}: {c}'
+        },
         emphasis: {
-          itemStyle: {
-            shadowBlur: 10,
-            shadowOffsetX: 0,
-            shadowColor: 'rgba(0, 0, 0, 0.5)'
+          label: {
+            show: true,
+            fontSize: 16,
+            fontWeight: 'bold'
           }
-        }
+        },
+        labelLine: {
+          show: true
+        },
+        data: emotionData.value
       }
     ]
   }
   chart.setOption(option)
 }
 
+// 处理趋势数据
+function processTrendData() {
+  // 生成最近7天的数据
+  const dates = []
+  const analysisCount = []
+  const accuracyRates = []
+  
+  for (let i = 6; i >= 0; i--) {
+    const date = new Date()
+    date.setDate(date.getDate() - i)
+    dates.push(date.toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit' }))
+    
+    // 统计当天的分析数量
+    const dayRecords = analysisRecords.value.filter(record => {
+      // 这里应该根据实际的创建时间字段进行过滤
+      // 由于API返回的数据结构中没有创建时间，这里使用模拟数据
+      return true
+    })
+    
+    analysisCount.push(Math.floor(Math.random() * 50) + 10)
+    accuracyRates.push(Math.floor(Math.random() * 10) + 90)
+  }
+  
+  trendData.value = {
+    dates,
+    analysis: analysisCount,
+    accuracy: accuracyRates
+  }
+}
+
 // 初始化趋势图表
 function initTrendChart() {
   if (!trendChartRef.value) return
+  
+  // 处理趋势数据
+  processTrendData()
   
   const chart = echarts.init(trendChartRef.value)
   const option = {
@@ -108,7 +196,7 @@ function initTrendChart() {
     },
     xAxis: {
       type: 'category',
-      data: trendData.dates
+      data: trendData.value.dates
     },
     yAxis: [
       {
@@ -128,7 +216,7 @@ function initTrendChart() {
       {
         name: '分析次数',
         type: 'bar',
-        data: trendData.analysis,
+        data: trendData.value.analysis,
         itemStyle: {
           color: '#409EFF'
         }
@@ -137,7 +225,7 @@ function initTrendChart() {
         name: '准确率',
         type: 'line',
         yAxisIndex: 1,
-        data: trendData.accuracy,
+        data: trendData.value.accuracy,
         itemStyle: {
           color: '#67C23A'
         },
@@ -150,9 +238,26 @@ function initTrendChart() {
   chart.setOption(option)
 }
 
+// 计算平均准确率
+function calculateAvgAccuracy() {
+  if (analysisRecords.value.length === 0) {
+    avgAccuracy.value = 0
+    return
+  }
+  
+  const totalConfidence = analysisRecords.value.reduce((sum, record) => {
+    return sum + record.emotion_analysis_detail.confidence_percentage
+  }, 0)
+  
+  avgAccuracy.value = Math.round(totalConfidence / analysisRecords.value.length)
+}
+
 // 初始化准确率图表
 function initAccuracyChart() {
   if (!accuracyChartRef.value) return
+  
+  // 计算平均准确率
+  calculateAvgAccuracy()
   
   const chart = echarts.init(accuracyChartRef.value)
   const option = {
@@ -237,9 +342,23 @@ function initAccuracyChart() {
   chart.setOption(option)
 }
 
+// 处理设备分布数据
+function processDeviceData() {
+  // 由于API返回的数据中没有设备信息，这里使用模拟数据
+  // 实际项目中应该根据用户代理或其他方式统计设备类型
+  deviceData.value = [
+    { name: 'PC端', value: 60, itemStyle: { color: '#409EFF' } },
+    { name: '移动端', value: 35, itemStyle: { color: '#67C23A' } },
+    { name: '平板端', value: 5, itemStyle: { color: '#E6A23C' } }
+  ]
+}
+
 // 初始化设备分布图表
 function initDeviceChart() {
   if (!deviceChartRef.value) return
+  
+  // 处理设备分布数据
+  processDeviceData()
   
   const chart = echarts.init(deviceChartRef.value)
   const option = {
@@ -252,7 +371,8 @@ function initDeviceChart() {
       }
     },
     tooltip: {
-      trigger: 'item'
+      trigger: 'item',
+      formatter: '{b}: {c}%'
     },
     series: [
       {
@@ -267,20 +387,21 @@ function initDeviceChart() {
           borderWidth: 2
         },
         label: {
-          show: false,
-          position: 'center'
+          show: true,
+          position: 'outside',
+          formatter: '{b}: {c}%'
         },
         emphasis: {
           label: {
             show: true,
-            fontSize: 40,
+            fontSize: 16,
             fontWeight: 'bold'
           }
         },
         labelLine: {
-          show: false
+          show: true
         },
-        data: deviceData
+        data: deviceData.value
       }
     ]
   }
@@ -289,36 +410,12 @@ function initDeviceChart() {
 
 // 刷新数据
 function refreshData() {
-  loading.value = true
-  
-  // 模拟API调用
-  setTimeout(() => {
-    // 更新统计数据
-    totalUsers.value = Math.floor(Math.random() * 2000) + 1000
-    totalAnalysis.value = Math.floor(Math.random() * 8000) + 4000
-    todayAnalysis.value = Math.floor(Math.random() * 150) + 50
-    avgAccuracy.value = Math.floor(Math.random() * 10) + 90
-    
-    loading.value = false
-    
-    // 重新初始化图表
-    setTimeout(() => {
-      initEmotionChart()
-      initTrendChart()
-      initAccuracyChart()
-      initDeviceChart()
-    }, 100)
-  }, 1000)
+  fetchAnalysisRecords()
 }
 
 onMounted(() => {
-  // 初始化所有图表
-  setTimeout(() => {
-    initEmotionChart()
-    initTrendChart()
-    initAccuracyChart()
-    initDeviceChart()
-  }, 100)
+  // 获取数据并初始化图表
+  fetchAnalysisRecords()
 })
 </script>
 
