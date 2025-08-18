@@ -21,22 +21,24 @@
             <h2 class="text-lg font-semibold text-gray-900">音频文件信息</h2>
             <span class="text-sm text-gray-500">创建时间：{{ formatDate(detail.audio_file_detail.upload_time) }}</span>
           </div>
-          <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <div class="text-sm text-gray-500 mb-1">文件名</div>
-              <div class="text-base text-gray-900 font-medium">{{ detail.audio_file_detail.original_name }}</div>
-            </div>
-            <div>
-              <div class="text-sm text-gray-500 mb-1">文件大小</div>
-              <div class="text-base text-gray-900 font-medium">{{ (detail.audio_file_detail.file_size_mb ?? 0).toFixed(2) }} MB</div>
-            </div>
-            <div>
-              <div class="text-sm text-gray-500 mb-1">音频时长</div>
-              <div class="text-base text-gray-900 font-medium">{{ detail.audio_file_detail.duration_formatted }}</div>
-            </div>
-            <div>
-              <div class="text-sm text-gray-500 mb-1">采样率</div>
-              <div class="text-base text-gray-900 font-medium">{{ detail.audio_file_detail.sample_rate }} Hz</div>
+          <div class="p-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div class="bg-gray-50 p-4 rounded-lg">
+                <div class="text-sm text-gray-500 mb-2">文件名</div>
+                <div class="text-base text-gray-900 font-medium break-all">{{ detail.audio_file_detail.original_name }}</div>
+              </div>
+              <div class="bg-gray-50 p-4 rounded-lg">
+                <div class="text-sm text-gray-500 mb-2">文件大小</div>
+                <div class="text-base text-gray-900 font-medium">{{ (detail.audio_file_detail.file_size_mb ?? 0).toFixed(2) }} MB</div>
+              </div>
+              <div class="bg-gray-50 p-4 rounded-lg">
+                <div class="text-sm text-gray-500 mb-2">音频时长</div>
+                <div class="text-base text-gray-900 font-medium">{{ detail.audio_file_detail.duration_formatted }}</div>
+              </div>
+              <div class="bg-gray-50 p-4 rounded-lg">
+                <div class="text-sm text-gray-500 mb-2">采样率</div>
+                <div class="text-base text-gray-900 font-medium">48 kHz</div>
+              </div>
             </div>
           </div>
         </div>
@@ -84,9 +86,19 @@
           </div>
         </div>
 
-        <!-- 返回按钮 -->
-        <div class="flex justify-end">
-          <button @click="goBack" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200">返回历史列表</button>
+        <!-- 操作按钮 -->
+        <div class="flex justify-between items-center">
+          <div class="text-sm text-gray-500">
+            分析完成时间：{{ formatDate(detail.emotion_analysis_detail.analysis_time) }}
+          </div>
+          <div class="flex space-x-3">
+            <button @click="goToRecognition" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium">
+              开始新的识别
+            </button>
+            <button @click="goBack" class="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors duration-200 font-medium">
+              返回历史列表
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -194,6 +206,10 @@ const loadDetail = async () => {
 
 const goBack = () => {
   router.push({ path: '/history' })
+}
+
+const goToRecognition = () => {
+  router.push({ path: '/' })
 }
 
 onMounted(loadDetail)
