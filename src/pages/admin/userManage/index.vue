@@ -1,407 +1,405 @@
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from 'vue'
-import { Motion } from 'motion-v'
-import { ElMessage } from 'element-plus'
-import { cloneDeep } from 'lodash-es'
-import type { User, UserQueryParams } from '@/types/components/admin'
-import Search from '@/components/icon/search.vue'
-import {
-  getUsersAPI,
-  addUserAPI,
-  userDetailAPI,
-  editUserAPI,
-  deleteUserAPI
-} from '@/api/admin/users'
-import { useUserStore } from '@/stores/auth/user'
+import { ref, onMounted, computed } from 'vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import type { FormInstance, FormRules } from 'element-plus'
 
-// 动画配置
-const pageVariants = {
-  initial: { opacity: 0, y: 30 },
-  animate: { opacity: 1, y: 0 },
-  transition: { duration: 0.6, ease: 'easeOut' }
+// 用户数据类型定义
+interface User {
+  id: number
+  username: string
+  email: string
+  phone: string
+  status: 'active' | 'inactive'
+  role: 'user' | 'admin'
+  registerTime: string
+  lastLogin: string
 }
 
-// Store
-const userStore = useUserStore()
+// 表单数据类型
+interface UserForm {
+  username: string
+  email: string
+  phone: string
+  status: 'active' | 'inactive'
+  role: 'user' | 'admin'
+  password?: string
+}
 
 // 响应式数据
 const loading = ref(false)
-const list = ref<User[]>([])
+const dialogVisible = ref(false)
+const isEdit = ref(false)
+const searchKeyword = ref('')
+const currentPage = ref(1)
+const pageSize = ref(10)
 const total = ref(0)
-const isAdd = ref(false)
-const editableData = reactive<Record<string | number, User>>({})
 
-// 查询参数
-const params = reactive<UserQueryParams>({
-  query: '',
-  page: 1,
-  page_size: 10
+// 表单相关
+const formRef = ref<FormInstance>()
+const userForm = ref<UserForm>({
+  username: '',
+  email: '',
+  phone: '',
+  status: 'active',
+  role: 'user',
+  password: ''
 })
 
-// 计算属性
-const userId = computed(() => userStore.userInfo?.user_id)
-
-// 获取用户列表
-const getList = async () => {
-  try {
-    loading.value = true
-    const res = await getUsersAPI(params)
-    list.value = res.data.users
-    total.value = res.data.total
-  } catch (error) {
-    console.error('获取数据失败:', error)
-    ElMessage.error('获取用户列表失败')
-  } finally {
-    loading.value = false
+// 模拟用户数据
+const users = ref<User[]>([
+  {
+    id: 1,
+    username: '张三',
+    email: 'zhangsan@example.com',
+    phone: '13800138001',
+    status: 'active',
+    role: 'user',
+    registerTime: '2024-01-15 10:30:00',
+    lastLogin: '2024-01-20 14:25:00'
+  },
+  {
+    id: 2,
+    username: '李四',
+    email: 'lisi@example.com',
+    phone: '13800138002',
+    status: 'active',
+    role: 'admin',
+    registerTime: '2024-01-10 09:15:00',
+    lastLogin: '2024-01-20 16:45:00'
+  },
+  {
+    id: 3,
+    username: '王五',
+    email: 'wangwu@example.com',
+    phone: '13800138003',
+    status: 'inactive',
+    role: 'user',
+    registerTime: '2024-01-08 11:20:00',
+    lastLogin: '2024-01-18 09:30:00'
   }
+])
+
+// 表单验证规则
+const rules: FormRules<UserForm> = {
+  username: [
+    { required: true, message: '请输入用户名', trigger: 'blur' },
+    { min: 2, max: 20, message: '用户名长度在 2 到 20 个字符', trigger: 'blur' }
+  ],
+  email: [
+    { required: true, message: '请输入邮箱地址', trigger: 'blur' },
+    { type: 'email', message: '请输入正确的邮箱地址', trigger: 'blur' }
+  ],
+  phone: [
+    { required: true, message: '请输入手机号码', trigger: 'blur' },
+    { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号码', trigger: 'blur' }
+  ],
+  password: [
+    { required: true, message: '请输入密码', trigger: 'blur' },
+    { min: 6, max: 20, message: '密码长度在 6 到 20 个字符', trigger: 'blur' }
+  ]
 }
 
-// 搜索
-const search = () => {
-  params.page = 1
-  getList()
+// 计算属性 - 过滤后的用户列表
+const filteredUsers = computed(() => {
+  if (!searchKeyword.value) return users.value
+  return users.value.filter(user =>
+    user.username.includes(searchKeyword.value) ||
+    user.email.includes(searchKeyword.value) ||
+    user.phone.includes(searchKeyword.value)
+  )
+})
+
+// 分页数据
+const paginatedUsers = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value
+  const end = start + pageSize.value
+  return filteredUsers.value.slice(start, end)
+})
+
+// 方法
+function handleSearch() {
+  currentPage.value = 1
+  total.value = filteredUsers.value.length
 }
 
-// 重置参数
-const resetParams = () => {
-  params.page = 1
-  params.query = ''
-  getList()
-}
-
-// 查看用户详情
-const detail = async (id: number) => {
-  try {
-    const res = await userDetailAPI(id)
-    console.log('用户详情:', res)
-    ElMessage.success('查看用户详情成功')
-  } catch (error) {
-    console.error('获取用户详情失败:', error)
-    ElMessage.error('获取用户详情失败')
-  }
-}
-
-// 编辑用户
-const edit = (id: number) => {
-  const user = list.value.find(item => item.id === id)
-  if (user) {
-    editableData[id] = cloneDeep(user)
-  }
-}
-
-// 添加用户
-const handleAdd = () => {
-  if (isAdd.value) return
-
-  const newUser: User = {
-    id: null,
+function handleAdd() {
+  isEdit.value = false
+  userForm.value = {
     username: '',
     email: '',
-    is_active: false,
-    is_staff: false,
-    is_superuser: false
+    phone: '',
+    status: 'active',
+    role: 'user',
+    password: ''
   }
-
-  editableData[newUser.id as any] = cloneDeep(newUser)
-  isAdd.value = true
-  list.value.unshift(newUser)
+  dialogVisible.value = true
 }
 
-// 取消编辑
-const clean = (id: number | null) => {
-  if (isAdd.value && id === null) {
-    list.value = list.value.filter(item => item.id !== null)
-    isAdd.value = false
+function handleEdit(user: User) {
+  isEdit.value = true
+  userForm.value = {
+    username: user.username,
+    email: user.email,
+    phone: user.phone,
+    status: user.status,
+    role: user.role
   }
-  delete editableData[id as any]
+  dialogVisible.value = true
 }
 
-// 表单验证
-const validateData = (data: User) => {
-  const errors: string[] = []
-
-  if (!data.username?.trim()) {
-    errors.push('用户名不能为空')
-  }
-
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-  if (!emailRegex.test(data.email)) {
-    errors.push('邮箱格式不正确')
-  }
-
-  return errors
-}
-
-// 保存用户
-const save = async (key: number | null) => {
-  try {
-    const dataToSave = editableData[key as any]
-    const errors = validateData(dataToSave)
-
-    if (errors.length > 0) {
-      ElMessage.error(errors[0])
-      return
+function handleDelete(user: User) {
+  ElMessageBox.confirm(
+    `确定要删除用户 "${user.username}" 吗？`,
+    '删除确认',
+    {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
     }
-
-    let res
-    if (isAdd.value) {
-      res = await addUserAPI(dataToSave)
-    } else {
-      res = await editUserAPI(dataToSave)
+  ).then(() => {
+    const index = users.value.findIndex(u => u.id === user.id)
+    if (index > -1) {
+      users.value.splice(index, 1)
+      ElMessage.success('删除成功')
+      total.value = filteredUsers.value.length
     }
-
-    ElMessage.success(res.message || '操作成功')
-
-    // 清除可编辑状态
-    delete editableData[key as any]
-    isAdd.value = false
-    getList()
-  } catch (error: any) {
-    console.error('保存失败:', error)
-    ElMessage.error(error.message || '操作失败')
-  }
+  }).catch(() => {
+    ElMessage.info('已取消删除')
+  })
 }
 
-// 删除用户
-const deleteRecord = async (id: number) => {
-  try {
-    const res = await deleteUserAPI(id)
-    ElMessage.success(res.msg || '删除成功')
-    getList()
-  } catch (error) {
-    console.error('删除数据失败:', error)
-    ElMessage.error('删除失败')
-  }
+function handleStatusChange(user: User) {
+  ElMessage.success(`用户状态已${user.status === 'active' ? '启用' : '禁用'}`)
 }
 
-// 分页处理
-const handleSizeChange = (size: number) => {
-  params.page_size = size
-  params.page = 1
-  getList()
+function handleSubmit() {
+  if (!formRef.value) return
+
+  formRef.value.validate((valid) => {
+    if (valid) {
+      loading.value = true
+
+      // 模拟API调用
+      setTimeout(() => {
+        if (isEdit.value) {
+          // 编辑用户逻辑
+          ElMessage.success('用户信息更新成功')
+        } else {
+          // 添加用户逻辑
+          const newUser: User = {
+            id: Date.now(),
+            username: userForm.value.username,
+            email: userForm.value.email,
+            phone: userForm.value.phone,
+            status: userForm.value.status,
+            role: userForm.value.role,
+            registerTime: new Date().toLocaleString(),
+            lastLogin: '-'
+          }
+          users.value.unshift(newUser)
+          ElMessage.success('用户添加成功')
+        }
+
+        loading.value = false
+        dialogVisible.value = false
+        total.value = filteredUsers.value.length
+      }, 1000)
+    }
+  })
 }
 
-const handleCurrentChange = (page: number) => {
-  params.page = page
-  getList()
+function handleCancel() {
+  dialogVisible.value = false
 }
 
-// 行点击事件
-const handleRowClick = (row: User) => {
-  // 可以在这里添加行点击逻辑
+function handlePageChange(page: number) {
+  currentPage.value = page
 }
 
-// 组件挂载时获取数据
+function handleSizeChange(size: number) {
+  pageSize.value = size
+  currentPage.value = 1
+}
+
 onMounted(() => {
-  getList()
+  total.value = users.value.length
 })
 </script>
 
 <template>
-  <!-- @vue-ignore -->
-  <Motion :initial="pageVariants.initial" :animate="pageVariants.animate" :transition="pageVariants.transition"
-    class="user-manage">
-    <el-card>
-      <!-- 搜索和操作区域 -->
-      <Motion :initial="{ opacity: 0, y: -20 }" :animate="{ opacity: 1, y: 0 }"
-        :transition="{ duration: 0.5, delay: 0.1 }">
-        <el-row :gutter="16" class="mb-4">
-          <el-col :span="6">
-            <el-input v-model="params.query" placeholder="请输入邮箱或用户名" clearable @keyup.enter="search">
-              <template #prefix>
-                <el-icon>
-                  <Search />
-                </el-icon>
-              </template>
-            </el-input>
-          </el-col>
-          <el-col :span="12">
-            <el-space>
-              <Motion :whileHover="{ scale: 1.05 }" :whileTap="{ scale: 0.95 }">
-                <el-button @click="resetParams">
-                  <el-icon>
-                    <Refresh />
-                  </el-icon>
-                  重置
-                </el-button>
-              </Motion>
-              <Motion :whileHover="{ scale: 1.05 }" :whileTap="{ scale: 0.95 }">
-                <el-button type="primary" @click="search">
-                  <Search size="12" />
-                  查询
-                </el-button>
-              </Motion>
-              <Motion :whileHover="{ scale: 1.05 }" :whileTap="{ scale: 0.95 }">
-                <el-button type="success" @click="handleAdd">
-                  <el-icon>
-                    <Plus />
-                  </el-icon>
-                  添加
-                </el-button>
-              </Motion>
-            </el-space>
-          </el-col>
-        </el-row>
-      </Motion>
+  <div class="user-manage">
+    <!-- 页面标题 -->
+    <div class="page-header">
+      <h2 class="page-title">用户管理</h2>
+      <p class="page-description">管理系统用户信息，包括用户的基本信息、状态和权限设置</p>
+    </div>
 
-      <!-- 表格区域 -->
-      <Motion :initial="{ opacity: 0, y: 20 }" :animate="{ opacity: 1, y: 0 }"
-        :transition="{ duration: 0.6, delay: 0.2 }">
-        <el-table :data="list" v-loading="loading" border stripe class="user-table" @row-click="handleRowClick">
-          <el-table-column label="序号" width="80" align="center">
-            <template #default="{ $index }">
-              {{ (params.page - 1) * params.page_size + $index + 1 }}
-            </template>
-          </el-table-column>
+    <!-- 操作栏 -->
+    <div class="toolbar">
+      <div class="search-box">
+        <el-input v-model="searchKeyword" placeholder="搜索用户名、邮箱或手机号" clearable @input="handleSearch"
+          style="width: 300px">
+          <template #prefix>
+            <el-icon>
+              <Search />
+            </el-icon>
+          </template>
+        </el-input>
+      </div>
 
-          <el-table-column label="用户名" prop="username" min-width="120">
-            <template #default="{ row }">
-              <el-input v-if="editableData[row.id]" v-model="editableData[row.id].username" size="small" />
-              <el-link v-else type="primary" @click="detail(row.id)">
-                {{ row.username }}
-              </el-link>
-            </template>
-          </el-table-column>
+      <div class="actions">
+        <el-button type="primary" @click="handleAdd">
+          <el-icon>
+            <Plus />
+          </el-icon>
+          添加用户
+        </el-button>
+      </div>
+    </div>
 
-          <el-table-column label="邮箱" prop="email" min-width="180">
-            <template #default="{ row }">
-              <el-input v-if="editableData[row.id]" v-model="editableData[row.id].email" size="small" />
-              <span v-else>{{ row.email }}</span>
-            </template>
-          </el-table-column>
+    <!-- 用户表格 -->
+    <div class="table-container">
+      <el-table :data="paginatedUsers" v-loading="loading" stripe style="width: 100%">
+        <el-table-column prop="id" label="ID" width="80" />
+        <el-table-column prop="username" label="用户名" width="120" />
+        <el-table-column prop="email" label="邮箱" width="200" />
+        <el-table-column prop="phone" label="手机号" width="130" />
+        <el-table-column prop="role" label="角色" width="100">
+          <template #default="{ row }">
+            <el-tag :type="row.role === 'admin' ? 'danger' : 'primary'">
+              {{ row.role === 'admin' ? '管理员' : '普通用户' }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="status" label="状态" width="100">
+          <template #default="{ row }">
+            <el-switch v-model="row.status" active-value="active" inactive-value="inactive"
+              @change="handleStatusChange(row)" />
+          </template>
+        </el-table-column>
+        <el-table-column prop="registerTime" label="注册时间" width="160" />
+        <el-table-column prop="lastLogin" label="最后登录" width="160" />
+        <el-table-column label="操作" width="150" fixed="right">
+          <template #default="{ row }">
+            <el-button type="primary" size="small" @click="handleEdit(row)">
+              编辑
+            </el-button>
+            <el-button type="danger" size="small" @click="handleDelete(row)">
+              删除
+            </el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+    </div>
 
-          <el-table-column label="状态" prop="is_active" width="120" align="center">
-            <template #default="{ row }">
-              <el-switch v-if="editableData[row.id]" v-model="editableData[row.id].is_active" active-text="启用"
-                inactive-text="停用" size="small" />
-              <el-tag v-else :type="row.is_active ? 'success' : 'danger'" size="small">
-                {{ row.is_active ? '启用' : '停用' }}
-              </el-tag>
-            </template>
-          </el-table-column>
+    <!-- 分页 -->
+    <div class="pagination">
+      <el-pagination v-model:current-page="currentPage" v-model:page-size="pageSize" :page-sizes="[10, 20, 50, 100]"
+        :total="total" layout="total, sizes, prev, pager, next, jumper" @size-change="handleSizeChange"
+        @current-change="handlePageChange" />
+    </div>
 
-          <el-table-column label="工作人员权限" prop="is_staff" width="140" align="center">
-            <template #default="{ row }">
-              <el-switch v-if="editableData[row.id]" v-model="editableData[row.id].is_staff" active-text="是"
-                inactive-text="否" size="small" />
-              <el-tag v-else :type="row.is_staff ? 'success' : 'info'" size="small">
-                {{ row.is_staff ? '是' : '否' }}
-              </el-tag>
-            </template>
-          </el-table-column>
+    <!-- 添加/编辑用户对话框 -->
+    <el-dialog v-model="dialogVisible" :title="isEdit ? '编辑用户' : '添加用户'" width="500px" :close-on-click-modal="false">
+      <el-form ref="formRef" :model="userForm" :rules="rules" label-width="80px">
+        <el-form-item label="用户名" prop="username">
+          <el-input v-model="userForm.username" placeholder="请输入用户名" />
+        </el-form-item>
 
-          <el-table-column label="超级管理员权限" prop="is_superuser" width="160" align="center">
-            <template #default="{ row }">
-              <el-switch v-if="editableData[row.id]" v-model="editableData[row.id].is_superuser" active-text="是"
-                inactive-text="否" size="small" />
-              <el-tag v-else :type="row.is_superuser ? 'warning' : 'info'" size="small">
-                {{ row.is_superuser ? '是' : '否' }}
-              </el-tag>
-            </template>
-          </el-table-column>
+        <el-form-item label="邮箱" prop="email">
+          <el-input v-model="userForm.email" placeholder="请输入邮箱地址" />
+        </el-form-item>
 
-          <el-table-column label="操作" width="200" align="center" fixed="right">
-            <template #default="{ row }">
-              <el-space>
-                <template v-if="editableData[row.id]">
-                  <Motion :whileHover="{ scale: 1.1 }" :whileTap="{ scale: 0.9 }">
-                    <el-button type="primary" size="small" @click="save(row.id)">
-                      <el-icon>
-                        <Check />
-                      </el-icon>
-                      保存
-                    </el-button>
-                  </Motion>
-                  <Motion :whileHover="{ scale: 1.1 }" :whileTap="{ scale: 0.9 }">
-                    <el-button size="small" @click="clean(row.id)">
-                      <el-icon>
-                        <Close />
-                      </el-icon>
-                      取消
-                    </el-button>
-                  </Motion>
-                </template>
-                <template v-else>
-                  <Motion :whileHover="{ scale: 1.1 }" :whileTap="{ scale: 0.9 }">
-                    <el-button type="primary" size="small" :disabled="userId === row.id" @click="edit(row.id)">
-                      <el-icon>
-                        <Edit />
-                      </el-icon>
-                      编辑
-                    </el-button>
-                  </Motion>
-                  <Motion :whileHover="{ scale: 1.1 }" :whileTap="{ scale: 0.9 }">
-                    <el-popconfirm v-if="userId !== row.id && !isAdd && row.id !== editableData[row.id]?.id"
-                      title="确认删除吗?" confirm-button-text="确认" cancel-button-text="取消" @confirm="deleteRecord(row.id)">
-                      <template #reference>
-                        <el-button type="danger" size="small">
-                          <el-icon>
-                            <Delete />
-                          </el-icon>
-                          删除
-                        </el-button>
-                      </template>
-                    </el-popconfirm>
-                  </Motion>
-                </template>
-              </el-space>
-            </template>
-          </el-table-column>
-        </el-table>
-      </Motion>
+        <el-form-item label="手机号" prop="phone">
+          <el-input v-model="userForm.phone" placeholder="请输入手机号码" />
+        </el-form-item>
 
-      <!-- 分页区域 -->
-      <Motion :initial="{ opacity: 0, y: 20 }" :animate="{ opacity: 1, y: 0 }"
-        :transition="{ duration: 0.5, delay: 0.3 }" class="mt-4 flex justify-end">
-        <el-pagination v-model:current-page="params.page" v-model:page-size="params.page_size" :total="total"
-          :page-sizes="[10, 20, 50, 100]" layout="total, sizes, prev, pager, next, jumper"
-          @size-change="handleSizeChange" @current-change="handleCurrentChange" />
-      </Motion>
-    </el-card>
-  </Motion>
+        <el-form-item v-if="!isEdit" label="密码" prop="password">
+          <el-input v-model="userForm.password" type="password" placeholder="请输入密码" show-password />
+        </el-form-item>
+
+        <el-form-item label="角色" prop="role">
+          <el-select v-model="userForm.role" placeholder="请选择角色">
+            <el-option label="普通用户" value="user" />
+            <el-option label="管理员" value="admin" />
+          </el-select>
+        </el-form-item>
+
+        <el-form-item label="状态" prop="status">
+          <el-radio-group v-model="userForm.status">
+            <el-radio value="active">启用</el-radio>
+            <el-radio value="inactive">禁用</el-radio>
+          </el-radio-group>
+        </el-form-item>
+      </el-form>
+
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="handleCancel">取消</el-button>
+          <el-button type="primary" :loading="loading" @click="handleSubmit">
+            {{ isEdit ? '更新' : '添加' }}
+          </el-button>
+        </div>
+      </template>
+    </el-dialog>
+  </div>
 </template>
 
-<style scoped lang="scss">
+<style scoped>
 .user-manage {
-  .user-table {
-    :deep(.el-table__row) {
-      transition: all 0.3s ease;
+  padding: 20px;
+}
 
-      &:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-      }
-    }
+.page-header {
+  margin-bottom: 24px;
+}
 
-    :deep(.el-table__header) {
-      background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-    }
-  }
+.page-title {
+  font-size: 24px;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0 0 8px 0;
+}
 
-  .el-card {
-    border-radius: 12px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+.page-description {
+  color: #6b7280;
+  margin: 0;
+}
 
-    :deep(.el-card__body) {
-      padding: 24px;
-    }
-  }
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding: 16px;
+  background: #f9fafb;
+  border-radius: 8px;
+}
 
-  .el-button {
-    transition: all 0.3s ease;
+.search-box {
+  display: flex;
+  align-items: center;
+}
 
-    &:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    }
-  }
+.actions {
+  display: flex;
+  gap: 12px;
+}
 
-  .el-tag {
-    transition: all 0.3s ease;
+.table-container {
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
 
-    &:hover {
-      transform: scale(1.05);
-    }
-  }
+.pagination {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.dialog-footer {
+  text-align: right;
 }
 </style>
