@@ -9,7 +9,7 @@ import { defineConfig, loadEnv, mergeConfig } from 'vite'
 import vueDevTools from 'vite-plugin-vue-devtools'
 import { devConfig } from './vite.config.dev'
 import { prodConfig } from './vite.config.prod'
-import autoprefixer from 'autoprefixer';
+// import autoprefixer from 'autoprefixer'; // 暂时注释掉未使用的导入
 
 
 // 基础配置
@@ -56,7 +56,7 @@ const baseConfig: UserConfig = {
 }
 
 // https://vite.dev/config/
-export default defineConfig(({ command, mode }) => {
+export default defineConfig(({ mode }) => {
   // 加载环境变量
   const env = loadEnv(mode, process.cwd(), '')
 

@@ -25,15 +25,18 @@
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               <div class="bg-gray-50 p-4 rounded-lg">
                 <div class="text-sm text-gray-500 mb-2">文件名</div>
-                <div class="text-base text-gray-900 font-medium break-all">{{ detail.audio_file_detail.original_name }}</div>
+                <div class="text-base text-gray-900 font-medium break-all">{{ detail.audio_file_detail.original_name }}
+                </div>
               </div>
               <div class="bg-gray-50 p-4 rounded-lg">
                 <div class="text-sm text-gray-500 mb-2">文件大小</div>
-                <div class="text-base text-gray-900 font-medium">{{ (detail.audio_file_detail.file_size_mb ?? 0).toFixed(2) }} MB</div>
+                <div class="text-base text-gray-900 font-medium">{{ (detail.audio_file_detail.file_size_mb ??
+                  0).toFixed(2) }} MB</div>
               </div>
               <div class="bg-gray-50 p-4 rounded-lg">
                 <div class="text-sm text-gray-500 mb-2">音频时长</div>
-                <div class="text-base text-gray-900 font-medium">{{ detail.audio_file_detail.duration_formatted === '00:00' ? '无法获取' : detail.audio_file_detail.duration_formatted }}</div>
+                <div class="text-base text-gray-900 font-medium">{{ detail.audio_file_detail.duration_formatted ===
+                  '00:00' ? '无法获取' : detail.audio_file_detail.duration_formatted }}</div>
               </div>
               <div class="bg-gray-50 p-4 rounded-lg">
                 <div class="text-sm text-gray-500 mb-2">采样率</div>
@@ -68,7 +71,8 @@
                       <span class="text-gray-500">{{ toPercent(item.percentage) }}%</span>
                     </div>
                     <div class="w-full bg-gray-200 rounded-full h-2 mt-1">
-                      <div class="h-2 rounded-full" :class="getEmotionProgressClass(item.emotion)" :style="{ width: toPercent(item.percentage) + '%' }"></div>
+                      <div class="h-2 rounded-full" :class="getEmotionProgressClass(item.emotion)"
+                        :style="{ width: toPercent(item.percentage) + '%' }"></div>
                     </div>
                   </div>
                 </div>
@@ -92,10 +96,12 @@
             分析完成时间：{{ formatDate(detail.emotion_analysis_detail.analysis_time) }}
           </div>
           <div class="flex space-x-3">
-            <button @click="goToRecognition" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium">
+            <button @click="goToRecognition"
+              class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium">
               开始新的识别
             </button>
-            <button @click="goBack" class="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors duration-200 font-medium">
+            <button @click="goBack"
+              class="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors duration-200 font-medium">
               返回历史列表
             </button>
           </div>
@@ -216,5 +222,4 @@ onMounted(loadDetail)
 watch(() => route.query.id, loadDetail)
 </script>
 
-<style scoped>
-</style>
+<style scoped></style>

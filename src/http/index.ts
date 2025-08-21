@@ -119,6 +119,15 @@ serviceAxios.interceptors.response.use(
     return Promise.reject(message)
   },
 )
-export default serviceAxios
+// 为了解决TypeScript类型推断问题，明确声明http方法的返回类型
+interface HttpInstance {
+  get<T = any>(url: string, config?: any): Promise<T>
+  post<T = any>(url: string, data?: any, config?: any): Promise<T>
+  put<T = any>(url: string, data?: any, config?: any): Promise<T>
+  delete<T = any>(url: string, config?: any): Promise<T>
+}
 
-export { serverConfig }
+const http: HttpInstance = serviceAxios
+
+export default serviceAxios
+export { http, serverConfig }

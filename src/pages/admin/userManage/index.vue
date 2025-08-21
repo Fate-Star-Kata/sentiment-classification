@@ -64,8 +64,7 @@ const filteredUsers = computed(() => {
   if (!searchKeyword.value) return users.value
   return users.value.filter(user =>
     user.username.includes(searchKeyword.value) ||
-    user.email.includes(searchKeyword.value) ||
-    user.phone.includes(searchKeyword.value)
+    user.email.includes(searchKeyword.value)
   )
 })
 
@@ -220,7 +219,7 @@ function handleSizeChange(size: number) {
 
 onMounted(() => {
   fetchUsers()
-})</script>
+});</script>
 
 <template>
   <div class="user-manage">

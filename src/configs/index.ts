@@ -64,6 +64,7 @@ export const adminMenuItems: AdminHeader[] = [
     title: '音乐管理',
     icon: 'Headset',
     path: '/admin/music',
+    hide:true
   },
   {
     id: '5',
@@ -76,6 +77,8 @@ export const adminMenuItems: AdminHeader[] = [
     title: '系统设置',
     icon: 'Setting',
     path: '/admin/settings',
+    hide: true,
+
   }
 ]
 
